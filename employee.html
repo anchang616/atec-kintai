@@ -96,7 +96,7 @@ const BLANK_F = { date:TODAY, ci_h:'08', ci_m:'00', co_h:'17', co_m:'00', hayach
 
 let st = {
   screen: getSaved() ? 'onetap' : 'login',
-  emp: null, loginErr: '', tab: 'input',
+  emp: null, loginErr: '', tab: 'home',
   month: CP.monthKey, submitted: false, formErr: '',
   pinArr: ['','','',''], selEmpId: '', histRecs: [],
   submissions: {}, // 提出済み期間の記録 { periodKey: submittedAt }
@@ -169,49 +169,124 @@ function homeHtml() {
 
   // 締め日リマインダー計算
   const todayD = new Date(TODAY);
-  const cutoffD = new Date(CP.end); // 25日
+  const cutoffD = new Date(CP.end);
   const diffMs = cutoffD - todayD;
   const diffDays = Math.floor(diffMs / (1000*60*60*24));
 
-  let reminderBanner = '';
-  if (!isSubmitted) {
-    if (diffDays === 0) {
-      // 締め日当日
-      reminderBanner = `
-      <div style="background:#dc2626;border-radius:12px;padding:14px 16px;margin-bottom:12px;color:#fff;cursor:pointer" id="banner-submit">
-        <div style="font-size:15px;font-weight:700;margin-bottom:4px">📋 今日は締め日です！</div>
-        <div style="font-size:12px;opacity:.9">「記録・提出」タブを開いて、今月の勤怠を会社に送ってください →</div>
-      </div>`;
-    } else if (diffDays > 0 && diffDays <= 3) {
-      // 締め日3日前
-      reminderBanner = `
-      <div style="background:#d97706;border-radius:12px;padding:14px 16px;margin-bottom:12px;color:#fff;cursor:pointer" id="banner-submit">
-        <div style="font-size:15px;font-weight:700;margin-bottom:4px">⏰ 締め日まであと${diffDays}日</div>
-        <div style="font-size:12px;opacity:.9">「記録・提出」タブから今月の勤怠を確認して会社に送ってください →</div>
-      </div>`;
-    }
+  // 未入力日数を計算
+  const p = CP;
+  const inputted = new Set(st.histRecs.filter(r => r.work_date >= p.start && r.work_date <= p.end).map(r => r.work_date));
+  const missing = [];
+  const cur = new Date(p.start);
+  const endD = new Date(p.end);
+  while (cur <= todayD && cur <= endD) {
+    const ds = cur.toLocaleDateString('sv-SE');
+    if (!inputted.has(ds)) missing.push(ds);
+    cur.setDate(cur.getDate() + 1);
   }
+
+  if (st.tab === 'input')   return inputScreen();
+  if (st.tab === 'history') return historyScreen();
+  if (st.tab === 'confirm') return confirmScreen();
+
+  // ===== ホーム画面 =====
+  const todayStatus = todayRec
+    ? todayRec.kyumi
+      ? `<div style="background:#FEE2E2;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
+           <span style="font-size:20px">😴</span>
+           <div><div style="font-size:13px;font-weight:600;color:#B91C1C">今日は休みで登録済みです</div></div>
+         </div>`
+      : `<div style="background:#EAF3DE;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
+           <span style="font-size:20px">✅</span>
+           <div>
+             <div style="font-size:13px;font-weight:600;color:#2E7D32">今日の勤怠は入力済みです</div>
+             <div style="font-size:11px;color:#4CAF50;margin-top:2px">${dispT(todayRec.clock_in)} 〜 ${dispT(todayRec.clock_out)}</div>
+           </div>
+         </div>`
+    : `<button id="btn-goto-input" style="width:100%;padding:16px;background:#0F6E56;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+         <span>📝 今日の勤怠を入力する</span><span style="font-size:20px">→</span>
+       </button>`;
+
+  const missingStatus = missing.length > 0
+    ? `<button id="btn-goto-history" style="width:100%;padding:14px;background:#FEF2F2;border:1.5px solid #FECACA;color:#B91C1C;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+         <span>⚠️ 未入力が${missing.length}日あります</span><span style="font-size:18px">→</span>
+       </button>`
+    : `<div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;font-size:13px;color:#888;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+         <span>📅</span><span>今月の入力はすべて完了しています</span>
+       </div>`;
+
+  const submitStatus = isSubmitted
+    ? `<div style="background:#EAF3DE;border-radius:10px;padding:12px 14px;font-size:13px;color:#2E7D32;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+         <span>✅</span><span>今月分は会社に送信済みです</span>
+       </div>`
+    : diffDays === 0
+      ? `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+           <span>📋 今日が締め日！今月分を会社に送る</span><span style="font-size:18px">→</span>
+         </button>`
+      : diffDays > 0 && diffDays <= 3
+        ? `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#d97706;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+             <span>⏰ 締め日まであと${diffDays}日・今月分を送る</span><span style="font-size:18px">→</span>
+           </button>`
+        : `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#f5f5f3;border:1px solid #ddd;color:#666;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+             <span>📤 今月の記録を確認・提出する</span><span style="font-size:16px;color:#aaa">→</span>
+           </button>`;
 
   return `
   <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.5rem;margin-bottom:1rem">
     <div>
-      <div style="font-size:18px;font-weight:700">${st.emp.name}</div>
-      <div style="font-size:11px;color:#aaa;margin-top:2px">${TODAY}</div>
+      <div style="font-size:20px;font-weight:700">${st.emp.name}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${TODAY}　${CP.label}</div>
     </div>
     <button class="btn btn-sec btn-sm" id="btn-logout">ログアウト</button>
   </div>
-  <div class="period-bar">
-    <span style="font-weight:600">${CP.label}</span>
-    <span>${CP.start.slice(5)} 〜 ${CP.end.slice(5)}</span>
+
+  <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今日の状況</div>
+  ${todayStatus}
+
+  <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今月の入力状況</div>
+  ${missingStatus}
+
+  <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>
+  ${submitStatus}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+    <button id="btn-goto-input" class="btn btn-sec" style="padding:14px;font-size:13px;border-radius:12px">
+      📝 入力画面
+    </button>
+    <button id="btn-goto-history" class="btn btn-sec" style="padding:14px;font-size:13px;border-radius:12px">
+      📋 記録一覧
+    </button>
+  </div>`;
+}
+
+/* ===== 各サブ画面（タブ切り替え後） ===== */
+function inputScreen() {
+  const todayRec = st.histRecs.find(r => r.work_date === TODAY);
+  return `
+  <div style="display:flex;align-items:center;gap:10px;padding-top:.5rem;margin-bottom:1rem">
+    <button id="btn-goto-home" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666;padding:0">‹</button>
+    <div style="font-size:16px;font-weight:700">${st.emp.name}</div>
   </div>
-  ${reminderBanner}
-  ${todayRec && st.tab==='input' ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
-  ${st.tab === 'confirm' ? confirmSubmitHtml() : `
-  <div class="tab-bar">
-    <button class="tab ${st.tab==='input'?'on':''}" id="tab-input">今日の入力</button>
-    <button class="tab ${st.tab==='history'?'on':''}" id="tab-history">記録・提出</button>
+  ${todayRec ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
+  ${inputTab()}`;
+}
+
+function historyScreen() {
+  return `
+  <div style="display:flex;align-items:center;gap:10px;padding-top:.5rem;margin-bottom:1rem">
+    <button id="btn-goto-home" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666;padding:0">‹</button>
+    <div style="font-size:16px;font-weight:700">記録・提出</div>
   </div>
-  ${st.tab === 'input' ? inputTab() : historyTab()}`}`;
+  ${historyTab()}`;
+}
+
+function confirmScreen() {
+  return `
+  <div style="display:flex;align-items:center;gap:10px;padding-top:.5rem;margin-bottom:1rem">
+    <button id="btn-goto-home" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666;padding:0">‹</button>
+    <div style="font-size:16px;font-weight:700">送信前の確認</div>
+  </div>
+  ${confirmSubmitHtml()}`;
 }
 
 /* ===== 入力タブ ===== */
@@ -547,6 +622,7 @@ async function tryOnetap() {
     saveEmp(data);
     st.emp = data;
     st.screen = 'home';
+    st.tab = 'home';
     await loadHistory();
     render();
   } catch (e) {
@@ -566,6 +642,7 @@ async function tryLogin() {
     saveEmp(data);
     st.emp = data;
     st.screen = 'home';
+    st.tab = 'home';
     st.loginErr = '';
     st.pinArr = ['','','',''];
     await loadHistory();
@@ -632,34 +709,46 @@ function bindEvents() {
   }
 
   if (st.screen === 'home') {
-    on('btn-logout', 'click', () => {
+    const g2 = id => document.getElementById(id);
+    const on2 = (id, ev, fn) => { const el = g2(id); if (el) el.addEventListener(ev, fn); };
+
+    on2('btn-logout', 'click', () => {
       clearSaved();
-      Object.assign(st, { screen:'login', emp:null, tab:'input', submitted:false,
+      Object.assign(st, { screen:'login', emp:null, tab:'home', submitted:false,
         pinArr:['','','',''], selEmpId:'', histRecs:[], submissions:{}, f:{...BLANK_F} });
       render();
     });
-    on('banner-submit', 'click', () => { st.tab = 'history'; render(); });
-    on('tab-input',   'click', () => { st.tab = 'input';   st.submitted = false; render(); });
-    on('tab-history', 'click', () => { st.tab = 'history'; render(); });
-    on('btn-submit-month', 'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
-    on('btn-confirm-submit', 'click', submitMonth);
-    on('btn-cancel-submit', 'click', () => { st.tab = 'history'; render(); });
-    on('btn-kyu', 'click', () => { st.f.kyumi = st.f.kyumi ? '' : '休み'; render(); });
-    on('btn-sub', 'click', submitRecord);
-    on('btn-another', 'click', () => {
+
+    // ホーム画面のナビゲーション
+    on2('btn-goto-home',    'click', () => { st.tab = 'home'; render(); window.scrollTo(0,0); });
+    on2('btn-goto-input',   'click', () => { st.tab = 'input'; st.submitted = false; render(); window.scrollTo(0,0); });
+    on2('btn-goto-history', 'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
+    on2('btn-goto-submit',  'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
+    on2('banner-submit',    'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
+
+    // 提出フロー
+    on2('btn-submit-month',    'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
+    on2('btn-confirm-submit',  'click', submitMonth);
+    on2('btn-cancel-submit',   'click', () => { st.tab = 'history'; render(); });
+
+    // 入力フォーム
+    on2('btn-kyu', 'click', () => { st.f.kyumi = st.f.kyumi ? '' : '休み'; render(); });
+    on2('btn-sub', 'click', submitRecord);
+    on2('btn-another', 'click', () => {
       st.submitted = false;
       st.f = { ...BLANK_F, date: '' };
+      st.tab = 'home';
       render();
     });
 
     ['f-dt','f-cih','f-cim','f-coh','f-com','f-hc','f-zan','f-st'].forEach(id => {
-      const el = g(id); if (!el) return;
+      const el = g2(id); if (!el) return;
       const map = { 'f-dt':'date','f-cih':'ci_h','f-cim':'ci_m','f-coh':'co_h','f-com':'co_m',
                     'f-hc':'hayachi','f-zan':'zangyou','f-st':'site' };
       el.addEventListener('input', () => { st.f[map[id]] = el.value; });
     });
 
-    const msel = g('m-sel');
+    const msel = g2('m-sel');
     if (msel) msel.addEventListener('change', () => { st.month = msel.value; render(); });
   }
 }
