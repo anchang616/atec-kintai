@@ -99,6 +99,7 @@ let st = {
   emp: null, loginErr: '', tab: 'input',
   month: CP.monthKey, submitted: false, formErr: '',
   pinArr: ['','','',''], selEmpId: '', histRecs: [],
+  submissions: {}, // 提出済み期間の記録 { periodKey: submittedAt }
   f: { ...BLANK_F },
 };
 
@@ -176,12 +177,13 @@ function homeHtml() {
     <span style="font-weight:600">${CP.label}</span>
     <span>${CP.start.slice(5)} 〜 ${CP.end.slice(5)}</span>
   </div>
-  ${todayRec ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
+  ${todayRec && st.tab==='input' ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
+  ${st.tab === 'confirm' ? confirmSubmitHtml() : `
   <div class="tab-bar">
     <button class="tab ${st.tab==='input'?'on':''}" id="tab-input">入力</button>
     <button class="tab ${st.tab==='history'?'on':''}" id="tab-history">履歴</button>
   </div>
-  ${st.tab === 'input' ? inputTab() : historyTab()}`;
+  ${st.tab === 'input' ? inputTab() : historyTab()}`}`;
 }
 
 /* ===== 入力タブ ===== */
@@ -262,18 +264,16 @@ function historyTab() {
   const p = getPeriod(st.month + '-15');
   const mr = st.histRecs.filter(r => r.work_date >= p.start && r.work_date <= p.end)
     .sort((a,b) => a.work_date.localeCompare(b.work_date));
-  const zanTotal = mr.filter(r => !r.kyumi).reduce((s,r) => s + (+r.zangyou||0), 0);
+  const isSubmitted = !!st.submissions[p.monthKey];
 
-  // 期間内の平日（月〜土）をすべて列挙して未入力日を特定
   const inputted = new Set(mr.map(r => r.work_date));
   const missing = [];
   const cur = new Date(p.start);
   const endD = new Date(p.end);
   const todayD = new Date(TODAY);
   while (cur <= endD && cur <= todayD) {
-    const dw = cur.getDay();
     const ds = cur.toLocaleDateString('sv-SE');
-    if (!inputted.has(ds)) missing.push(ds); // 未入力日をすべて対象に
+    if (!inputted.has(ds)) missing.push(ds);
     cur.setDate(cur.getDate() + 1);
   }
 
@@ -285,7 +285,6 @@ function historyTab() {
     d.setMonth(d.getMonth() - 1);
   }
 
-  // 入力済み行と未入力行をまとめて日付順に並べる
   const allDates = new Set([...mr.map(r=>r.work_date), ...missing]);
   const sortedDates = [...allDates].sort();
 
@@ -297,11 +296,23 @@ function historyTab() {
     </select>
   </div>
   <div style="font-size:11px;color:#888;margin-bottom:10px;text-align:right">${p.start} 〜 ${p.end}</div>
+
+  ${isSubmitted ? `
+  <div style="background:#EAF3DE;border:1px solid #A5D6A7;border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#2E7D32;display:flex;align-items:center;gap:8px">
+    <span style="font-size:16px">✅</span>
+    <div>
+      <div style="font-weight:600">提出済み</div>
+      <div style="font-size:11px;margin-top:1px">${new Date(st.submissions[p.monthKey]).toLocaleDateString('ja-JP')} に提出しました</div>
+    </div>
+  </div>` : ''}
+
   <div class="msum">
     <div class="mbox"><div class="mbox-l">出勤日数</div><div class="mbox-v">${mr.filter(r=>!r.kyumi).length}日</div></div>
     <div class="mbox"><div class="mbox-l" style="color:${missing.length>0?'#dc2626':'#888'}">未入力</div><div class="mbox-v" style="color:${missing.length>0?'#dc2626':'#aaa'}">${missing.length}日</div></div>
   </div>
-  ${missing.length > 0 ? `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#B91C1C">未入力の日があります。行をタップして入力できます。</div>` : ''}
+
+  ${!isSubmitted && missing.length > 0 ? `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#B91C1C">未入力の日があります。行をタップして入力できます。</div>` : ''}
+
   <div class="card" style="padding:1rem">
     <table>
       <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
@@ -314,37 +325,112 @@ function historyTab() {
               const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
               const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
               if (!r) {
-                // 未入力行：赤背景でタップ入力可能
-                return `<tr data-missing="${date}" style="background:#FEF2F2;cursor:pointer;" onclick="jumpToInput('${date}')">
+                return `<tr style="background:#FEF2F2;${!isSubmitted?'cursor:pointer;':''}" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}}>
                   <td style="color:#B91C1C;font-weight:600">${date.slice(5)}</td>
                   <td style="color:${col}">${dow}</td>
-                  <td colspan="4" style="color:#B91C1C;font-size:11px">未入力 — タップして入力</td>
-                  <td style="text-align:right;color:#B91C1C;font-size:16px">›</td>
+                  <td colspan="4" style="color:#B91C1C;font-size:11px">${!isSubmitted?'未入力 — タップして入力':'未入力'}</td>
+                  <td style="text-align:right;color:#B91C1C;font-size:16px">${!isSubmitted?'›':''}</td>
                 </tr>`;
               }
               if (r.kyumi) {
-                return `<tr style="cursor:pointer">
-                  <td onclick="jumpToInput('${date}')">${date.slice(5)}</td>
-                  <td style="color:${col}" onclick="jumpToInput('${date}')">${dow}</td>
-                  <td colspan="4" style="text-align:center" onclick="jumpToInput('${date}')"><span class="badge badge-r">休み</span></td>
-                  <td style="text-align:right"><button onclick="deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button></td>
+                return `<tr style="${!isSubmitted?'cursor:pointer':''}">
+                  <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${date.slice(5)}</td>
+                  <td style="color:${col}" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dow}</td>
+                  <td colspan="4" style="text-align:center" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}><span class="badge badge-r">休み</span></td>
+                  <td style="text-align:right">${!isSubmitted?`<button onclick="deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button>`:''}</td>
                 </tr>`;
               }
-              return `<tr style="cursor:pointer">
-                <td onclick="jumpToInput('${date}')">${date.slice(5)}</td>
-                <td style="color:${col}" onclick="jumpToInput('${date}')">${dow}</td>
-                <td onclick="jumpToInput('${date}')">${dispT(r.clock_in)}</td>
-                <td onclick="jumpToInput('${date}')">${dispT(r.clock_out)}</td>
-                <td onclick="jumpToInput('${date}')">${r.hayachi>0?`<span class="badge badge-g">${r.hayachi}h</span>`:'-'}</td>
-                <td onclick="jumpToInput('${date}')">${r.zangyou>0?`<span class="badge badge-y">${r.zangyou}h</span>`:'-'}</td>
-                <td><span style="color:#888;font-size:11px">${r.site||''}</span><button onclick="deleteRecord('${r.id}','${date}')" style="float:right;background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button></td>
+              return `<tr style="${!isSubmitted?'cursor:pointer':''}">
+                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${date.slice(5)}</td>
+                <td style="color:${col}" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dow}</td>
+                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dispT(r.clock_in)}</td>
+                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dispT(r.clock_out)}</td>
+                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${r.hayachi>0?`<span class="badge badge-g">${r.hayachi}h</span>`:'-'}</td>
+                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${r.zangyou>0?`<span class="badge badge-y">${r.zangyou}h</span>`:'-'}</td>
+                <td><span style="color:#888;font-size:11px">${r.site||''}</span>${!isSubmitted?`<button onclick="deleteRecord('${r.id}','${date}')" style="float:right;background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button>`:''}</td>
               </tr>`;
             }).join('')}
       </tbody>
     </table>
-  </div>`;
+  </div>
+
+  ${!isSubmitted ? `
+  <button id="btn-submit-month" class="btn btn-pri" style="margin-top:10px;background:${missing.length>0?'#888':'#0F6E56'}">
+    ${p.label}を提出する
+  </button>
+  <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">提出後は修正できません</div>
+  ` : ''}`;
 }
 
+/* ===== 提出確認画面 ===== */
+function confirmSubmitHtml() {
+  const p = getPeriod(st.month + '-15');
+  const mr = st.histRecs.filter(r => r.work_date >= p.start && r.work_date <= p.end)
+    .sort((a,b) => a.work_date.localeCompare(b.work_date));
+
+  const inputted = new Set(mr.map(r => r.work_date));
+  const missing = [];
+  const cur = new Date(p.start);
+  const endD = new Date(p.end);
+  const todayD = new Date(TODAY);
+  while (cur <= endD && cur <= todayD) {
+    const ds = cur.toLocaleDateString('sv-SE');
+    if (!inputted.has(ds)) missing.push(ds);
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  return `
+  <div style="padding-top:.5rem;margin-bottom:1.25rem">
+    <div style="font-size:18px;font-weight:700">提出前の最終確認</div>
+    <div style="font-size:12px;color:#aaa;margin-top:2px">${p.label}（${p.start} 〜 ${p.end}）</div>
+  </div>
+
+  ${missing.length > 0 ? `
+  <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:1rem;margin-bottom:12px">
+    <div style="font-weight:600;color:#B91C1C;margin-bottom:8px;font-size:13px">⚠️ ${missing.length}日間が未入力です</div>
+    ${missing.map(d => {
+      const dw = ['日','月','火','水','木','金','土'][new Date(d).getDay()];
+      return `<div style="font-size:12px;color:#B91C1C;padding:3px 0;border-bottom:1px solid #FECACA">${d.slice(5)}（${dw}）</div>`;
+    }).join('')}
+    <div style="font-size:11px;color:#888;margin-top:8px">未入力のまま提出することもできますが、提出後は修正できません。</div>
+  </div>` : `
+  <div style="background:#EAF3DE;border:1px solid #A5D6A7;border-radius:12px;padding:1rem;margin-bottom:12px;font-size:13px;color:#2E7D32">
+    ✅ 全日程の入力が完了しています
+  </div>`}
+
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:600">入力内容の確認</div>
+    <table>
+      <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th></tr></thead>
+      <tbody>${mr.map(r => {
+        const d2 = new Date(r.work_date);
+        const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
+        const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
+        if (r.kyumi) return `<tr><td>${r.work_date.slice(5)}</td><td style="color:${col}">${dow}</td><td colspan="4" style="text-align:center"><span class="badge badge-r">休み</span></td></tr>`;
+        return `<tr>
+          <td>${r.work_date.slice(5)}</td>
+          <td style="color:${col}">${dow}</td>
+          <td>${dispT(r.clock_in)}</td>
+          <td>${dispT(r.clock_out)}</td>
+          <td>${r.hayachi>0?r.hayachi+'h':'-'}</td>
+          <td>${r.zangyou>0?r.zangyou+'h':'-'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>
+
+  <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:1rem;margin-bottom:16px;font-size:12px;color:#92400E">
+    <div style="font-weight:600;margin-bottom:4px">⚠️ 提出すると修正できなくなります</div>
+    上記の内容に間違いがないことを確認してから提出してください。
+  </div>
+
+  <button id="btn-confirm-submit" class="btn btn-pri" style="background:#dc2626;margin-bottom:10px">
+    間違いありません、提出します
+  </button>
+  <button id="btn-cancel-submit" class="btn btn-sec">
+    戻って確認する
+  </button>`;
+}
 /* ===== 削除 ===== */
 async function deleteRecord(id, date) {
   if (!confirm(`${date} の記録を削除しますか？`)) return;
@@ -386,6 +472,20 @@ function jumpToInput(date) {
   window.scrollTo(0, 0);
 }
 
+/* ===== 月次提出 ===== */
+async function submitMonth() {
+  const p = getPeriod(st.month + '-15');
+  const { error } = await db.from('monthly_submissions').upsert({
+    employee_id: st.emp.id,
+    period_key: p.monthKey,
+    submitted_at: new Date().toISOString(),
+  }, { onConflict: 'employee_id,period_key' });
+  if (error) { alert('提出に失敗しました: ' + error.message); return; }
+  await loadHistory();
+  st.tab = 'history';
+  render();
+}
+
 /* ===== DB ===== */
 async function loadEmployees() {
   const sel = document.getElementById('l-emp');
@@ -399,9 +499,13 @@ async function loadEmployees() {
 
 async function loadHistory() {
   if (!st.emp) return;
-  const { data } = await db.from('attendance_records')
-    .select('*').eq('employee_id', st.emp.id).order('work_date', { ascending: false });
-  st.histRecs = data || [];
+  const [recRes, subRes] = await Promise.all([
+    db.from('attendance_records').select('*').eq('employee_id', st.emp.id).order('work_date', { ascending: false }),
+    db.from('monthly_submissions').select('*').eq('employee_id', st.emp.id),
+  ]);
+  st.histRecs = recRes.data || [];
+  st.submissions = {};
+  (subRes.data || []).forEach(s => { st.submissions[s.period_key] = s.submitted_at; });
 }
 
 /* ===== 認証 ===== */
@@ -507,6 +611,9 @@ function bindEvents() {
     });
     on('tab-input',   'click', () => { st.tab = 'input';   st.submitted = false; render(); });
     on('tab-history', 'click', () => { st.tab = 'history'; render(); });
+    on('btn-submit-month', 'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
+    on('btn-confirm-submit', 'click', submitMonth);
+    on('btn-cancel-submit', 'click', () => { st.tab = 'history'; render(); });
     on('btn-kyu', 'click', () => { st.f.kyumi = st.f.kyumi ? '' : '休み'; render(); });
     on('btn-sub', 'click', submitRecord);
     on('btn-another', 'click', () => {
