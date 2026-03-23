@@ -112,6 +112,7 @@ function dispT(t) {
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
 function calcH(ci, co) {
+  if (!ci || !co) return 0;
   const [ih, im] = ci.split(':').map(Number);
   const [oh, om] = co.split(':').map(Number);
   const m = (oh * 60 + om) - (ih * 60 + im) - 60;
