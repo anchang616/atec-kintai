@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A-TEC 勤怠 — 管理者</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;font-size:14px;background:#f0f0ed;color:#1a1a1a;min-height:100vh}
+.login-wrap{max-width:380px;margin:0 auto;padding:2.5rem 1rem}
+.logo{text-align:center;margin-bottom:2rem}
+.logo-ttl{font-size:22px;font-weight:600;color:#0F6E56}
+.logo-sub{font-size:12px;color:#888;margin-top:4px}
+.card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:1.5rem}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;color:#666;margin-bottom:5px;font-weight:500}
+.fld input,.fld select{width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:9px;font-size:14px;font-family:inherit;color:#1a1a1a;background:#fff;outline:none}
+.fld input:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,.1)}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn:active{opacity:.85}
+.btn-pri{background:#0F6E56;color:#fff}
+.btn-sec{background:#f5f5f3;border:1px solid #ddd;color:#666;width:auto;padding:6px 14px;font-size:12px;font-weight:500}
+.err{background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:9px 12px;font-size:12px;color:#B91C1C;margin-bottom:12px}
+.adm-wrap{display:flex;height:100vh;overflow:hidden}
+.sbar{width:160px;min-width:160px;background:#fff;border-right:1px solid #eee;display:flex;flex-direction:column;padding:0}
+.sbar-logo{padding:16px 14px 12px;border-bottom:1px solid #f0f0f0}
+.sbar-logo-ttl{font-size:14px;font-weight:700;color:#0F6E56}
+.sbar-logo-sub{font-size:10px;color:#aaa;margin-top:2px}
+.sbar-lbl{padding:14px 14px 5px;font-size:9px;color:#aaa;letter-spacing:.1em;font-weight:600}
+.nav{padding:9px 14px;font-size:13px;cursor:pointer;color:#666;border:none;background:transparent;width:100%;text-align:left;font-family:inherit;border-left:3px solid transparent;transition:background .1s}
+.nav:hover{background:#f5f5f3}
+.nav.on{color:#0F6E56;border-left-color:#0F6E56;background:#f0fdf4;font-weight:600}
+.sbar-foot{margin-top:auto;padding:12px 14px;border-top:1px solid #f0f0f0}
+.main{flex:1;overflow-y:auto;padding:1.5rem}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:8px;flex-wrap:wrap}
+.sec-ttl{font-size:16px;font-weight:600}
+.mgrid{display:grid;gap:10px;margin-bottom:1.25rem}
+.met{background:#f5f5f3;border-radius:10px;padding:12px 14px}
+.met-l{font-size:10px;color:#888;margin-bottom:3px;font-weight:500}
+.met-v{font-size:22px;font-weight:700}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.bg{background:#DCFCE7;color:#166534}
+.br{background:#FEE2E2;color:#B91C1C}
+.ba{background:#FEF3C7;color:#92400E}
+.bgy{background:#f0f0ed;color:#666}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 8px;border-bottom:1px solid #eee;color:#888;font-size:10px;font-weight:600;white-space:nowrap}
+td{padding:8px 8px;border-bottom:1px solid #fafafa;white-space:nowrap;font-size:12px}
+tr:last-child td{border-bottom:none}
+.tbl-w{overflow-x:auto}
+.act-btn{padding:6px 13px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;color:#444;font-family:inherit;font-weight:500}
+.act-btn:hover{background:#f5f5f3}
+.act-btn.pri{background:#0F6E56;border-color:#0F6E56;color:#fff}
+.alr-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;margin-bottom:8px}
+.av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.av-t{background:#D1FAE5;color:#065F46}
+.av-r{background:#FEE2E2;color:#991B1B}
+.emp-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f3}
+.emp-row:last-child{border-bottom:none}
+.add-box{background:#f5f5f3;border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid #eee}
+.ibox{padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit}
+.loading{text-align:center;padding:2rem;color:#aaa;font-size:13px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://yzltpyxpzsgaphswxywy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vpNaGJWb-tan7UMX5Oz2nQ_l2o-BtrR';
+const ADMIN_PASS   = 'atec2026';
+const STD_H = 8;
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TODAY = new Date().toLocaleDateString('sv-SE');
+
+function getPeriod(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const day = d.getDate();
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const periodMonth = day >= 26 ? (m === 11 ? 0 : m + 1) : m;
+  const periodYear  = day >= 26 ? (m === 11 ? y + 1 : y) : y;
+  const startYear   = periodMonth === 0 ? periodYear - 1 : periodYear;
+  const startMonth  = periodMonth === 0 ? 11 : periodMonth - 1;
+  const start = new Date(startYear, startMonth, 26);
+  const end   = new Date(periodYear, periodMonth, 25);
+  return {
+    label: `${periodYear}年${periodMonth + 1}月分`,
+    start: start.toLocaleDateString('sv-SE'),
+    end:   end.toLocaleDateString('sv-SE'),
+    monthKey: `${periodYear}-${String(periodMonth + 1).padStart(2, '0')}`,
+  };
+}
+const CURRENT_PERIOD = getPeriod();
+
+let st = {
+  screen: 'login', pass: '', loginErr: '',
+  tab: 'dashboard', month: CURRENT_PERIOD.monthKey,
+  emps: [], todayRecs: [], monthRecs: [], histRecs: [],
+  histEmpId: '',
+  loading: false,
+  addOpen: false, addErr: '',
+  ne: { name: '', pin: '' },
+};
+
+function calcH(ci, co) {
+  const [ih, im] = ci.split(':').map(Number);
+  const [oh, om] = co.split(':').map(Number);
+  const m = (oh * 60 + om) - (ih * 60 + im) - 60;
+  return m > 0 ? m / 60 : 0;
+}
+function fH(h) { return h > 0 ? h.toFixed(1) + 'h' : '-'; }
+function ini(n) { const p = (n||'').trim().split(/\s+/); return p.length >= 2 ? p[0][0] + (p[1][0]||'') : n.slice(0,2); }
+function empById(id) { return st.emps.find(e => e.id === id); }
+function missing() { const s = new Set(st.todayRecs.map(r => r.employee_id)); return st.emps.filter(e => !s.has(e.id)); }
+
+function getMonthOptions() {
+  const opts = []; const d = new Date();
+  for (let i = 0; i < 4; i++) {
+    const p = getPeriod(d.toLocaleDateString('sv-SE'));
+    opts.push(`<option value="${p.monthKey}" ${st.month===p.monthKey?'selected':''}>${p.label}（${p.start.slice(5)}〜${p.end.slice(5)}）</option>`);
+    d.setMonth(d.getMonth() - 1);
+  }
+  return [...new Map(opts.map(o => [o.match(/value="([^"]+)"/)[1], o])).values()].join('');
+}
+
+function render() { document.getElementById('root').innerHTML = html(); bind(); }
+
+function html() {
+  if (st.screen === 'login') return loginHtml();
+  return admHtml();
+}
+
+function loginHtml() {
+  return `<div class="login-wrap">
+    <div class="logo">
+      <div class="logo-ttl">A-TEC 勤怠</div>
+      <div class="logo-sub">管理者ログイン</div>
+    </div>
+    <div class="card">
+      ${st.loginErr ? `<div class="err">${st.loginErr}</div>` : ''}
+      <div class="fld">
+        <label>管理者パスワード</label>
+        <input type="password" id="l-pass" placeholder="パスワードを入力">
+      </div>
+      <button class="btn btn-pri" id="btn-login">ログイン</button>
+    </div>
+  </div>`;
+}
+
+function admHtml() {
+  const tabs = [
+    {id:'dashboard', l:'ダッシュボード'},
+    {id:'monthly',   l:'月次レポート'},
+    {id:'alerts',    l:'未入力アラート'},
+    {id:'history',   l:'個人別履歴'},
+    {id:'master',    l:'従業員マスタ'},
+  ];
+  return `<div class="adm-wrap">
+    <div class="sbar">
+      <div class="sbar-logo">
+        <div class="sbar-logo-ttl">A-TEC</div>
+        <div class="sbar-logo-sub">管理者画面</div>
+      </div>
+      <div class="sbar-lbl">MENU</div>
+      ${tabs.map(t => `<button class="nav ${st.tab===t.id?'on':''}" id="tab-${t.id}">${t.l}</button>`).join('')}
+      <div class="sbar-foot">
+        <button class="btn-sec act-btn" id="btn-logout" style="width:100%">ログアウト</button>
+      </div>
+    </div>
+    <div class="main">${tabContent()}</div>
+  </div>`;
+}
+
+function tabContent() {
+  if (st.loading) return '<div class="loading">読み込み中...</div>';
+  if (st.tab === 'dashboard') return dashTab();
+  if (st.tab === 'monthly')   return monthTab();
+  if (st.tab === 'alerts')    return alertTab();
+  if (st.tab === 'history')   return histTab();
+  return masterTab();
+}
+
+function dashTab() {
+  const ms = missing();
+  const otH = st.todayRecs.filter(r=>!r.kyumi).reduce((s,r)=>s+(+r.zangyou||0), 0);
+  return `
+  <div class="sec-hd">
+    <div class="sec-ttl">本日の出勤状況</div>
+    <span style="font-size:12px;color:#aaa">${TODAY}</span>
+  </div>
+  <div class="mgrid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="met"><div class="met-l">従業員数</div><div class="met-v">${st.emps.length}</div></div>
+    <div class="met"><div class="met-l">出勤済</div><div class="met-v" style="color:#0F6E56">${st.todayRecs.length}</div></div>
+    <div class="met"><div class="met-l">未入力</div><div class="met-v" style="color:#dc2626">${ms.length}</div></div>
+    <div class="met"><div class="met-l">残業計</div><div class="met-v" style="color:#d97706;font-size:18px">${otH>0?otH+'h':'-'}</div></div>
+  </div>
+  <div class="tbl-w"><table>
+    <thead><tr><th>氏名</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th><th>状態</th></tr></thead>
+    <tbody>${st.emps.map(e => {
+      const r = st.todayRecs.find(x => x.employee_id === e.id);
+      if (r) {
+        return r.kyumi
+          ? `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="text-align:center"><span class="badge br">休み</span></td><td><span class="badge bg">入力済</span></td></tr>`
+          : `<tr><td style="font-weight:600">${e.name}</td><td>${r.clock_in.slice(0,5)}</td><td>${r.clock_out.slice(0,5)}</td><td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td><td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td><td style="color:#aaa;max-width:90px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td><td><span class="badge bg">入力済</span></td></tr>`;
+      }
+      return `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="color:#ccc">—</td><td><span class="badge br">未入力</span></td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function monthTab() {
+  const mr = st.monthRecs;
+  const sum = st.emps.map(e => {
+    const er = mr.filter(r => r.employee_id === e.id);
+    const otH = er.filter(r=>!r.kyumi).reduce((s,r)=>s+(+r.zangyou||0), 0);
+    return { e, days: er.filter(r=>!r.kyumi).length, otH };
+  });
+  return `
+  <div class="sec-hd">
+    <div>
+      <div class="sec-ttl">月次レポート</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${getPeriod(st.month+'-15').start} 〜 ${getPeriod(st.month+'-15').end}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="ibox" id="m-sel" style="font-size:12px;padding:6px 10px">${getMonthOptions()}</select>
+      <button class="act-btn pri" id="btn-csv">CSV出力</button>
+    </div>
+  </div>
+  <div class="tbl-w" style="margin-bottom:1.25rem"><table>
+    <thead><tr><th>氏名</th><th>出勤日数</th><th>残業</th></tr></thead>
+    <tbody>${sum.map(s=>`<tr>
+      <td style="font-weight:600">${s.e.name}</td>
+      <td>${s.days}日</td>
+      <td>${s.otH>0?`<span class="badge ba">${s.otH}h</span>`:'-'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>
+  <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#444">日別明細（${mr.length}件）</div>
+  <div class="tbl-w"><table>
+    <thead><tr><th>日付</th><th>曜</th><th>氏名</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
+    <tbody>${mr.sort((a,b)=>a.work_date.localeCompare(b.work_date)||a.employee_id.localeCompare(b.employee_id)).map(r=>{
+      const e = empById(r.employee_id);
+      const d = new Date(r.work_date);
+      const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+      if (r.kyumi) return `<tr>
+        <td>${r.work_date.slice(5)}</td><td>${dow}</td>
+        <td>${e?.name||''}</td>
+        <td colspan="5" style="text-align:center"><span class="badge br">休み</span></td>
+      </tr>`;
+      return `<tr>
+        <td>${r.work_date.slice(5)}</td><td>${dow}</td>
+        <td>${e?.name||''}</td>
+        <td>${r.clock_in.slice(0,5)}</td><td>${r.clock_out.slice(0,5)}</td>
+        <td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
+        <td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td>
+        <td style="color:#aaa;max-width:110px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function alertTab() {
+  const ms = missing();
+
+  return `
+  <div class="sec-hd">
+    <div class="sec-ttl">未入力アラート</div>
+    <span style="font-size:12px;color:#aaa">${TODAY}</span>
+  </div>
+  ${ms.length === 0
+    ? `<div style="text-align:center;padding:3rem;color:#aaa">本日は全員入力済みです ✓</div>`
+    : `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#B91C1C">${ms.length}名が本日の勤怠を未入力です</div>
+    ${ms.map(e=>`<div class="alr-item">
+      <div class="av av-r">${ini(e.name)}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${e.name}</div><div style="font-size:11px;color:#aaa">${e.dept}</div></div>
+      <span class="badge br">未入力</span>
+    </div>`).join('')}
+`
+  }`;
+}
+
+function histTab() {
+  const empId = st.histEmpId || (st.emps[0]?.id);
+  if (!st.histEmpId && st.emps.length > 0) st.histEmpId = st.emps[0].id;
+  const er = st.histRecs.filter(r => r.employee_id === empId).sort((a,b)=>b.work_date.localeCompare(a.work_date));
+  const otH = er.filter(r=>!r.kyumi).reduce((s,r)=>s+(+r.zangyou||0), 0);
+  return `
+  <div class="sec-hd">
+    <div class="sec-ttl">個人別履歴</div>
+    <select class="ibox" id="h-ei" style="font-size:12px;padding:6px 10px">
+      ${st.emps.map(e=>`<option value="${e.id}" ${empId===e.id?'selected':''}>${e.name}</option>`).join('')}
+    </select>
+  </div>
+  <div class="mgrid" style="grid-template-columns:repeat(2,1fr)">
+    <div class="met"><div class="met-l">総出勤日数</div><div class="met-v">${er.filter(r=>!r.kyumi).length}日</div></div>
+    <div class="met"><div class="met-l">残業計</div><div class="met-v" style="color:#d97706;font-size:18px">${otH>0?otH+'h':'-'}</div></div>
+  </div>
+  <div class="tbl-w"><table>
+    <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
+    <tbody>${er.map(r=>{
+      const d = new Date(r.work_date);
+      const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+      const col = d.getDay()===0?'#dc2626':d.getDay()===6?'#2563eb':'inherit';
+      if (r.kyumi) return `<tr>
+        <td>${r.work_date.slice(5)}</td>
+        <td style="color:${col}">${dow}</td>
+        <td colspan="5" style="text-align:center"><span class="badge br">休み</span></td>
+      </tr>`;
+      return `<tr>
+        <td>${r.work_date.slice(5)}</td>
+        <td style="color:${col}">${dow}</td>
+        <td>${r.clock_in.slice(0,5)}</td><td>${r.clock_out.slice(0,5)}</td>
+        <td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
+        <td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td>
+        <td style="color:#aaa;max-width:110px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function masterTab() {
+  return `
+  <div class="sec-hd">
+    <div class="sec-ttl">従業員マスタ <span style="font-size:12px;color:#aaa;font-weight:400">${st.emps.length}名</span></div>
+    <button class="act-btn pri" id="btn-toggle-add">${st.addOpen?'閉じる':'＋ 追加'}</button>
+  </div>
+  ${st.addOpen ? `<div class="add-box">
+    <div style="font-size:11px;font-weight:600;margin-bottom:10px;color:#888">新規追加</div>
+    ${st.addErr ? `<div class="err">${st.addErr}</div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:end">
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:4px">氏名</label><input class="ibox" type="text" id="ne-nm" placeholder="山田 太郎" value="${st.ne.name}" style="width:100%"></div>
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:4px">PIN（4桁）</label><input class="ibox" type="text" inputmode="numeric" maxlength="4" id="ne-pin" placeholder="0000" value="${st.ne.pin}" style="width:100%"></div>
+      <button class="act-btn pri" id="btn-add-emp" style="height:36px">追加</button>
+    </div>
+  </div>` : ''}
+  <div>${st.emps.map(e=>`<div class="emp-row">
+    <div class="av av-t">${ini(e.name)}</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:600">${e.name}</div>
+      <div style="font-size:11px;color:#aaa">${e.dept} · PIN: ${e.pin}</div>
+    </div>
+    <button class="act-btn" data-del="${e.id}" style="font-size:11px;color:#dc2626;border-color:#fecaca">削除</button>
+  </div>`).join('')}</div>`;
+}
+
+async function loadAll() {
+  st.loading = true; render();
+  const [empRes, todayRes, monthRes] = await Promise.all([
+    db.from('employees').select('*').eq('active', true).order('created_at'),
+    db.from('attendance_records').select('*').eq('work_date', TODAY),
+    (() => { const p = getPeriod(st.month+'-15'); return db.from('attendance_records').select('*, employees(name)').gte('work_date', p.start).lte('work_date', p.end); })(),
+  ]);
+  st.emps = empRes.data || [];
+  st.todayRecs = todayRes.data || [];
+  st.monthRecs = monthRes.data || [];
+  if (!st.histEmpId && st.emps.length > 0) st.histEmpId = st.emps[0].id;
+  st.loading = false; render();
+}
+
+async function loadHistory() {
+  if (!st.histEmpId) return;
+  const { data } = await db.from('attendance_records').select('*').eq('employee_id', st.histEmpId).order('work_date', { ascending: false });
+  st.histRecs = data || [];
+  render();
+}
+
+async function addEmp() {
+  const name = (document.getElementById('ne-nm')?.value||'').trim();
+
+  const pin  = (document.getElementById('ne-pin')?.value||'').trim();
+  if (!name) { st.addErr = '氏名を入力してください'; render(); return; }
+  if (!/^\d{4}$/.test(pin)) { st.addErr = 'PINは4桁の数字で入力してください'; render(); return; }
+  const { error } = await db.from('employees').insert({ name, pin });
+  if (error) { st.addErr = '追加に失敗しました: ' + error.message; render(); return; }
+  st.addOpen = false; st.ne = { name:'', pin:'' }; st.addErr = '';
+  await loadAll();
+}
+
+async function delEmp(id) {
+  if (!confirm('この従業員を削除しますか？関連する打刻記録も削除されます。')) return;
+  await db.from('employees').update({ active: false }).eq('id', id);
+  await loadAll();
+}
+
+function csvExport() {
+  const p = getPeriod(st.month+'-15');
+  const rows = [
+    [`${p.label}（${p.start} 〜 ${p.end}）`,'','','','','','','',''],
+    ['日付','曜日','氏名','種別','出社','退社','早遅(h)','残業(h)','行先・他'],
+  ];
+
+  // 従業員ごとにグループ化して出力
+  st.emps.forEach(emp => {
+    const er = st.monthRecs
+      .filter(r => r.employee_id === emp.id)
+      .sort((a,b) => a.work_date.localeCompare(b.work_date));
+    if (er.length === 0) return;
+
+    er.forEach(r => {
+      const d = new Date(r.work_date);
+      const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+      rows.push([
+        r.work_date, dow, emp.name,
+        r.kyumi||'出勤',
+        r.kyumi ? '' : r.clock_in.slice(0,5),
+        r.kyumi ? '' : r.clock_out.slice(0,5),
+        r.kyumi ? '' : (r.hayachi||0),
+        r.kyumi ? '' : (r.zangyou||0),
+        r.kyumi ? '' : (r.site||''),
+      ]);
+    });
+
+    // 従業員ごとの集計行
+    const workDays = er.filter(r => !r.kyumi).length;
+    const hayaTotal = er.filter(r => !r.kyumi).reduce((s,r) => s + (+r.hayachi||0), 0);
+    const zanTotal  = er.filter(r => !r.kyumi).reduce((s,r) => s + (+r.zangyou||0), 0);
+    rows.push(['','',emp.name,'【集計】',
+      `出勤日数: ${workDays}日`, '',
+      `早遅合計: ${hayaTotal}h`,
+      `残業合計: ${zanTotal}h`,
+      '',
+    ]);
+    rows.push(['','','','','','','','','']); // 空行
+  });
+
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `A-TEC_勤怠_${p.label}.csv`;
+  a.click();
+}
+
+function bind() {
+  const g  = id => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = g(id); if (el) el.addEventListener(ev, fn); };
+
+  if (st.screen === 'login') {
+    on('l-pass', 'keydown', e => { if (e.key === 'Enter') login(); });
+    on('btn-login', 'click', login);
+  }
+  if (st.screen === 'admin') {
+    on('btn-logout', 'click', () => { st.screen = 'login'; st.pass = ''; render(); });
+    ['dashboard','monthly','alerts','history','master'].forEach(t => {
+      on('tab-'+t, 'click', async () => {
+        st.tab = t;
+        if (t === 'history') { render(); await loadHistory(); }
+        else if (t === 'monthly') { render(); await loadMonthData(); }
+        else render();
+      });
+    });
+    on('btn-csv', 'click', csvExport);
+    g('m-sel')?.addEventListener('change', async e => {
+      st.month = e.target.value;
+      await loadMonthData();
+    });
+    g('h-ei')?.addEventListener('change', async e => {
+      st.histEmpId = e.target.value;
+      render();
+      await loadHistory();
+    });
+    on('btn-toggle-add', 'click', () => { st.addOpen = !st.addOpen; st.addErr = ''; render(); });
+    on('btn-add-emp', 'click', addEmp);
+    document.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => delEmp(btn.dataset.del));
+    });
+  }
+}
+
+async function login() {
+  const pass = document.getElementById('l-pass')?.value || '';
+  if (pass !== ADMIN_PASS) { st.loginErr = 'パスワードが違います'; render(); return; }
+  st.screen = 'admin'; st.loginErr = ''; st.pass = '';
+  await loadAll();
+}
+
+async function loadMonthData() {
+  st.loading = true; render();
+  const p = getPeriod(st.month+'-15');
+  const { data } = await db.from('attendance_records').select('*')
+    .gte('work_date', p.start).lte('work_date', p.end);
+  st.monthRecs = data || [];
+  st.loading = false; render();
+}
+
+render();
+</script>
+</body>
+</html>

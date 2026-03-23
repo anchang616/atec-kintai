@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>A-TEC 勤怠</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;font-size:14px;background:#f0f0ed;color:#1a1a1a;min-height:100vh}
+.wrap{max-width:440px;margin:0 auto;padding:1.5rem 1rem 3rem}
+.logo{text-align:center;margin-bottom:2rem;padding-top:1rem}
+.logo-ttl{font-size:22px;font-weight:600;color:#0F6E56}
+.logo-sub{font-size:12px;color:#888;margin-top:4px}
+.card{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:1.5rem;margin-bottom:12px}
+.card-ttl{font-size:10px;font-weight:600;color:#888;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0}
+.fld{margin-bottom:14px}
+.fld:last-child{margin-bottom:0}
+.fld label{display:block;font-size:11px;color:#666;margin-bottom:5px;font-weight:500}
+.fld input,.fld select{width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:9px;font-size:15px;font-family:inherit;color:#1a1a1a;background:#fff;outline:none;-webkit-appearance:none}
+.fld input:focus,.fld select:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,.1)}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.time-row{display:flex;align-items:center;gap:8px}
+.time-sep{font-size:20px;color:#aaa}
+.num-input{width:64px!important;font-size:18px!important;text-align:center!important;display:inline-block!important}
+.pin-row{display:flex;gap:10px;justify-content:center;margin-top:6px}
+.pin-box{width:56px;height:60px;font-size:24px;font-weight:600;text-align:center;border:1.5px solid #ddd;border-radius:10px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none}
+.pin-box:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,.1)}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-pri{background:#0F6E56;color:#fff}
+.btn-sec{background:#f5f5f3;border:1px solid #ddd;color:#666}
+.btn-sm{width:auto;padding:7px 16px;font-size:12px;font-weight:500}
+.btn-onetap{width:100%;padding:18px;background:#0F6E56;color:#fff;border:none;border-radius:14px;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-switch{display:block;width:100%;text-align:center;margin-top:14px;font-size:12px;color:#888;cursor:pointer;background:none;border:none;font-family:inherit;padding:8px}
+.btn-kyu-off{width:100%;padding:12px;border-radius:9px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;border:1.5px solid #ddd;background:#f5f5f3;color:#666}
+.btn-kyu-on{width:100%;padding:12px;border-radius:9px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;border:1.5px solid #dc2626;background:#FEE2E2;color:#B91C1C}
+.err{background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:10px 12px;font-size:12px;color:#B91C1C;margin-bottom:12px}
+.ok-card{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:2rem 1.5rem;text-align:center}
+.ok-ttl{font-size:17px;font-weight:600;color:#166534;margin-bottom:4px}
+.ok-sub{font-size:13px;color:#16a34a}
+.period-bar{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:9px;padding:8px 13px;margin-bottom:10px;font-size:12px;color:#2E7D32;display:flex;justify-content:space-between;align-items:center}
+.warn-box{background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;padding:9px 12px;font-size:12px;color:#92400E;margin-bottom:10px}
+.tab-bar{display:flex;gap:4px;background:#f0f0ed;border-radius:10px;padding:3px;margin-bottom:1rem}
+.tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;color:#888;border:none;background:transparent;font-family:inherit}
+.tab.on{background:#fff;color:#0F6E56;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.msum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.mbox{background:#f5f5f3;border-radius:9px;padding:10px;text-align:center}
+.mbox-l{font-size:10px;color:#888;margin-bottom:3px;font-weight:500}
+.mbox-v{font-size:19px;font-weight:600;color:#1a1a1a}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-r{background:#FEE2E2;color:#B91C1C}
+.badge-y{background:#FEF3C7;color:#92400E}
+.badge-g{background:#f0f0ed;color:#666}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 6px;border-bottom:1px solid #f0f0f0;color:#888;font-size:10px;font-weight:600;white-space:nowrap}
+td{padding:8px 6px;border-bottom:1px solid #f9f9f9;font-size:12px;color:#1a1a1a}
+tr:last-child td{border-bottom:none}
+.loading{text-align:center;padding:2rem;color:#aaa;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://yzltpyxpzsgaphswxywy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vpNaGJWb-tan7UMX5Oz2nQ_l2o-BtrR';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const STD_H = 8;
+const TODAY = new Date().toLocaleDateString('sv-SE');
+const LS_KEY = 'atec_emp_v2'; // v2: 旧データと区別するためキー名を変更
+
+// 25日締めロジック
+function getPeriod(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const day = d.getDate(), y = d.getFullYear(), m = d.getMonth();
+  const pm = day >= 26 ? (m === 11 ? 0 : m + 1) : m;
+  const py = day >= 26 ? (m === 11 ? y + 1 : y) : y;
+  const sy = pm === 0 ? py - 1 : py;
+  const sm = pm === 0 ? 11 : pm - 1;
+  const start = new Date(sy, sm, 26).toLocaleDateString('sv-SE');
+  const end   = new Date(py, pm, 25).toLocaleDateString('sv-SE');
+  return {
+    label: `${py}年${pm + 1}月分`,
+    start, end,
+    monthKey: `${py}-${String(pm + 1).padStart(2, '0')}`,
+  };
+}
+const CP = getPeriod();
+
+function getSaved()  { try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; } }
+function saveEmp(e)  { try { localStorage.setItem(LS_KEY, JSON.stringify({id:e.id,name:e.name})); } catch {} }
+function clearSaved(){ try { localStorage.removeItem(LS_KEY); } catch {} }
+
+const BLANK_F = { date:TODAY, ci_h:'08', ci_m:'00', co_h:'17', co_m:'00', hayachi:'', zangyou:'', site:'', kyumi:'' };
+
+let st = {
+  screen: getSaved() ? 'onetap' : 'login',
+  emp: null, loginErr: '', tab: 'input',
+  month: CP.monthKey, submitted: false, formErr: '',
+  pinArr: ['','','',''], selEmpId: '', histRecs: [],
+  f: { ...BLANK_F },
+};
+
+function calcH(ci, co) {
+  const [ih,im] = ci.split(':').map(Number);
+  const [oh,om] = co.split(':').map(Number);
+  const m = (oh*60+om)-(ih*60+im)-60;
+  return m > 0 ? m/60 : 0;
+}
+function fH(h) { return h > 0 ? h.toFixed(1)+'h' : '-'; }
+function fT(h,m) { return String(+h).padStart(2,'0')+':'+String(+m).padStart(2,'0'); }
+
+function render() { document.getElementById('root').innerHTML = buildHtml(); bindEvents(); }
+
+function buildHtml() {
+  if (st.screen === 'onetap') return onetapHtml();
+  if (st.screen === 'login')  return loginHtml();
+  if (st.screen === 'home')   return homeHtml();
+  return '<div class="loading">読み込み中...</div>';
+}
+
+/* ===== ワンタップ ===== */
+function onetapHtml() {
+  const s = getSaved();
+  return `
+  <div class="logo"><div class="logo-ttl">A-TEC 勤怠</div><div class="logo-sub">${TODAY}</div></div>
+  <div class="card" style="text-align:center;padding:2rem 1.5rem">
+    <div style="font-size:13px;color:#888;margin-bottom:6px">おかえりなさい</div>
+    <div style="font-size:24px;font-weight:700;margin-bottom:1.75rem">${s ? s.name : ''}</div>
+    <button class="btn-onetap" id="btn-onetap">ログイン</button>
+    <button class="btn-switch" id="btn-switch">別のアカウントで入る</button>
+  </div>`;
+}
+
+/* ===== 通常ログイン ===== */
+function loginHtml() {
+  return `
+  <div class="logo"><div class="logo-ttl">A-TEC 勤怠</div><div class="logo-sub">従業員ログイン</div></div>
+  <div class="card">
+    ${st.loginErr ? `<div class="err">${st.loginErr}</div>` : ''}
+    <div class="fld">
+      <label>氏名を選んでください</label>
+      <select id="l-emp"><option value="">-- 選択してください --</option></select>
+    </div>
+    <div class="fld">
+      <label>PINコード（4桁）</label>
+      <div class="pin-row">
+        ${[0,1,2,3].map(i => `<input class="pin-box" type="password" inputmode="numeric" maxlength="1" id="pin-${i}">`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-pri" id="btn-login" style="margin-top:18px">ログイン</button>
+  </div>`;
+}
+
+/* ===== ホーム ===== */
+function homeHtml() {
+  const todayRec = st.histRecs.find(r => r.work_date === TODAY);
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.5rem;margin-bottom:1rem">
+    <div>
+      <div style="font-size:18px;font-weight:700">${st.emp.name}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${TODAY}</div>
+    </div>
+    <button class="btn btn-sec btn-sm" id="btn-logout">ログアウト</button>
+  </div>
+  <div class="period-bar">
+    <span style="font-weight:600">${CP.label}</span>
+    <span>${CP.start.slice(5)} 〜 ${CP.end.slice(5)}</span>
+  </div>
+  ${todayRec ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
+  <div class="tab-bar">
+    <button class="tab ${st.tab==='input'?'on':''}" id="tab-input">入力</button>
+    <button class="tab ${st.tab==='history'?'on':''}" id="tab-history">履歴</button>
+  </div>
+  ${st.tab === 'input' ? inputTab() : historyTab()}`;
+}
+
+/* ===== 入力タブ ===== */
+function inputTab() {
+  const f = st.f;
+  const isRest = f.kyumi === '休み';
+
+  if (st.submitted) {
+    return `<div class="ok-card">
+      <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
+      <div class="ok-ttl">登録完了</div>
+      <div class="ok-sub">${f.date}（${isRest ? '休み' : '出勤'}）を記録しました</div>
+      <button class="btn btn-sec" id="btn-another" style="margin-top:16px;width:auto;padding:9px 22px">別の日付を入力</button>
+    </div>`;
+  }
+
+  return `
+  <div class="card">
+    ${st.formErr ? `<div class="err">${st.formErr}</div>` : ''}
+    <div class="card-ttl">勤務日</div>
+    <div class="fld">
+      <label>日付 <span style="color:#dc2626">*</span></label>
+      <input type="date" id="f-dt" value="${f.date}">
+    </div>
+    <div class="fld" style="margin-bottom:0">
+      <button id="btn-kyu" class="${isRest ? 'btn-kyu-on' : 'btn-kyu-off'}">
+        ${isRest ? '✕ 休みを取り消す' : '休み'}
+      </button>
+    </div>
+  </div>
+  ${!isRest ? `
+  <div class="card">
+    <div class="card-ttl">時刻</div>
+    <div class="r2">
+      <div class="fld" style="margin-bottom:0">
+        <label>出社 <span style="color:#dc2626">*</span></label>
+        <div class="time-row">
+          <input type="number" class="num-input" id="f-cih" value="${f.ci_h}" min="4" max="12">
+          <span class="time-sep">：</span>
+          <input type="number" class="num-input" id="f-cim" value="${f.ci_m}" min="0" max="59" step="5">
+        </div>
+      </div>
+      <div class="fld" style="margin-bottom:0">
+        <label>退社 <span style="color:#dc2626">*</span></label>
+        <div class="time-row">
+          <input type="number" class="num-input" id="f-coh" value="${f.co_h}" min="12" max="23">
+          <span class="time-sep">：</span>
+          <input type="number" class="num-input" id="f-com" value="${f.co_m}" min="0" max="59" step="5">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-ttl">早遅・残業</div>
+    <div class="r2">
+      <div class="fld" style="margin-bottom:0">
+        <label>早遅（時間数）</label>
+        <input type="number" id="f-hc" value="${f.hayachi}" min="0" max="10" step="0.5" placeholder="0" style="width:100%">
+      </div>
+      <div class="fld" style="margin-bottom:0">
+        <label>残業（時間）</label>
+        <input type="number" id="f-zan" value="${f.zangyou}" min="0" max="10" step="0.5" placeholder="0" style="width:100%">
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-ttl">作業内容</div>
+    <div class="fld" style="margin-bottom:0">
+      <label>行先・他</label>
+      <input type="text" id="f-st" value="${f.site}" placeholder="行先・その他">
+    </div>
+  </div>` : ''}
+  <button class="btn btn-pri" id="btn-sub" style="margin-top:4px">登録する</button>`;
+}
+
+/* ===== 履歴タブ ===== */
+function historyTab() {
+  const p = getPeriod(st.month + '-15');
+  const mr = st.histRecs.filter(r => r.work_date >= p.start && r.work_date <= p.end)
+    .sort((a,b) => a.work_date.localeCompare(b.work_date));
+  const zanTotal = mr.filter(r => !r.kyumi).reduce((s,r) => s + (+r.zangyou||0), 0);
+
+  // 期間内の平日（月〜土）をすべて列挙して未入力日を特定
+  const inputted = new Set(mr.map(r => r.work_date));
+  const missing = [];
+  const cur = new Date(p.start);
+  const endD = new Date(p.end);
+  const todayD = new Date(TODAY);
+  while (cur <= endD && cur <= todayD) {
+    const dw = cur.getDay();
+    const ds = cur.toLocaleDateString('sv-SE');
+    if (!inputted.has(ds)) missing.push(ds); // 未入力日をすべて対象に
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  const mOpts = [];
+  const d = new Date();
+  for (let i = 0; i < 4; i++) {
+    const pp = getPeriod(d.toLocaleDateString('sv-SE'));
+    mOpts.push(`<option value="${pp.monthKey}" ${st.month===pp.monthKey?'selected':''}>${pp.label}（${pp.start.slice(5)}〜${pp.end.slice(5)}）</option>`);
+    d.setMonth(d.getMonth() - 1);
+  }
+
+  // 入力済み行と未入力行をまとめて日付順に並べる
+  const allDates = new Set([...mr.map(r=>r.work_date), ...missing]);
+  const sortedDates = [...allDates].sort();
+
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <div style="font-size:13px;font-weight:600">勤怠履歴</div>
+    <select id="m-sel" style="padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;font-family:inherit;background:#fff">
+      ${[...new Map(mOpts.map(o=>[o.match(/value="([^"]+)"/)[1],o])).values()].join('')}
+    </select>
+  </div>
+  <div style="font-size:11px;color:#888;margin-bottom:10px;text-align:right">${p.start} 〜 ${p.end}</div>
+  <div class="msum">
+    <div class="mbox"><div class="mbox-l">出勤日数</div><div class="mbox-v">${mr.filter(r=>!r.kyumi).length}日</div></div>
+    <div class="mbox"><div class="mbox-l" style="color:${missing.length>0?'#dc2626':'#888'}">未入力</div><div class="mbox-v" style="color:${missing.length>0?'#dc2626':'#aaa'}">${missing.length}日</div></div>
+  </div>
+  ${missing.length > 0 ? `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#B91C1C">未入力の日があります。行をタップして入力できます。</div>` : ''}
+  <div class="card" style="padding:1rem">
+    <table>
+      <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
+      <tbody>
+        ${sortedDates.length === 0
+          ? `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:1.5rem">この期間の記録はありません</td></tr>`
+          : sortedDates.map(date => {
+              const r = mr.find(x => x.work_date === date);
+              const d2 = new Date(date);
+              const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
+              const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
+              if (!r) {
+                // 未入力行：赤背景でタップ入力可能
+                return `<tr data-missing="${date}" style="background:#FEF2F2;cursor:pointer;" onclick="jumpToInput('${date}')">
+                  <td style="color:#B91C1C;font-weight:600">${date.slice(5)}</td>
+                  <td style="color:${col}">${dow}</td>
+                  <td colspan="4" style="color:#B91C1C;font-size:11px">未入力 — タップして入力</td>
+                  <td style="text-align:right;color:#B91C1C;font-size:16px">›</td>
+                </tr>`;
+              }
+              if (r.kyumi) {
+                return `<tr style="cursor:pointer">
+                  <td onclick="jumpToInput('${date}')">${date.slice(5)}</td>
+                  <td style="color:${col}" onclick="jumpToInput('${date}')">${dow}</td>
+                  <td colspan="4" style="text-align:center" onclick="jumpToInput('${date}')"><span class="badge badge-r">休み</span></td>
+                  <td style="text-align:right"><button onclick="deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button></td>
+                </tr>`;
+              }
+              return `<tr style="cursor:pointer">
+                <td onclick="jumpToInput('${date}')">${date.slice(5)}</td>
+                <td style="color:${col}" onclick="jumpToInput('${date}')">${dow}</td>
+                <td onclick="jumpToInput('${date}')">${r.clock_in.slice(0,5)}</td>
+                <td onclick="jumpToInput('${date}')">${r.clock_out.slice(0,5)}</td>
+                <td onclick="jumpToInput('${date}')">${r.hayachi>0?`<span class="badge badge-g">${r.hayachi}h</span>`:'-'}</td>
+                <td onclick="jumpToInput('${date}')">${r.zangyou>0?`<span class="badge badge-y">${r.zangyou}h</span>`:'-'}</td>
+                <td><span style="color:#888;font-size:11px">${r.site||''}</span><button onclick="deleteRecord('${r.id}','${date}')" style="float:right;background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button></td>
+              </tr>`;
+            }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ===== 削除 ===== */
+async function deleteRecord(id, date) {
+  if (!confirm(`${date} の記録を削除しますか？`)) return;
+  const { error } = await db.from('attendance_records').delete().eq('id', id);
+  if (error) { alert('削除に失敗しました: ' + error.message); return; }
+  await loadHistory();
+  render();
+}
+
+/* ===== 未入力日・修正からの直接入力 ===== */
+function jumpToInput(date) {
+  const existing = st.histRecs.find(r => r.work_date === date);
+  let f;
+  if (existing) {
+    // 既存レコードの内容をフォームに展開
+    if (existing.kyumi) {
+      f = { ...BLANK_F, date, kyumi: '休み' };
+    } else {
+      const ci = existing.clock_in.split(':');
+      const co = existing.clock_out.split(':');
+      f = {
+        date,
+        ci_h: ci[0], ci_m: ci[1],
+        co_h: co[0], co_m: co[1],
+        hayachi: existing.hayachi || '',
+        zangyou: existing.zangyou || '',
+        site: existing.site || '',
+        kyumi: '',
+      };
+    }
+  } else {
+    f = { ...BLANK_F, date };
+  }
+  st.tab = 'input';
+  st.submitted = false;
+  st.formErr = '';
+  st.f = f;
+  render();
+  window.scrollTo(0, 0);
+}
+
+/* ===== DB ===== */
+async function loadEmployees() {
+  const sel = document.getElementById('l-emp');
+  if (!sel) return;
+  const { data } = await db.from('employees').select('id,name').eq('active',true).order('created_at');
+  if (data) {
+    sel.innerHTML = '<option value="">-- 選択してください --</option>' +
+      data.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+  }
+}
+
+async function loadHistory() {
+  if (!st.emp) return;
+  const { data } = await db.from('attendance_records')
+    .select('*').eq('employee_id', st.emp.id).order('work_date', { ascending: false });
+  st.histRecs = data || [];
+}
+
+/* ===== 認証 ===== */
+async function tryOnetap() {
+  const saved = getSaved();
+  if (!saved) { clearSaved(); st.screen = 'login'; render(); return; }
+  try {
+    const { data } = await db.from('employees').select('id,name').eq('id', saved.id).eq('active', true).single();
+    if (!data) { clearSaved(); st.screen = 'login'; render(); return; }
+    saveEmp(data);
+    st.emp = data;
+    st.screen = 'home';
+    await loadHistory();
+    render();
+  } catch (e) {
+    clearSaved(); st.screen = 'login'; render();
+  }
+}
+
+async function tryLogin() {
+  const selEl = document.getElementById('l-emp');
+  const empId = selEl ? selEl.value : '';
+  const pin = st.pinArr.join('');
+  if (!empId) { st.loginErr = '氏名を選択してください'; render(); loadEmployees(); return; }
+  if (pin.length < 4) { st.loginErr = 'PINを4桁入力してください'; render(); loadEmployees(); return; }
+  try {
+    const { data } = await db.from('employees').select('*').eq('id', empId).eq('pin', pin).eq('active', true).single();
+    if (!data) { st.loginErr = 'PINコードが違います'; render(); loadEmployees(); return; }
+    saveEmp(data);
+    st.emp = data;
+    st.screen = 'home';
+    st.loginErr = '';
+    st.pinArr = ['','','',''];
+    await loadHistory();
+    render();
+  } catch (e) {
+    st.loginErr = 'エラーが発生しました。再度お試しください。';
+    render(); loadEmployees();
+  }
+}
+
+async function submitRecord() {
+  const f = st.f;
+  const isRest = f.kyumi === '休み';
+  if (!f.date) { st.formErr = '日付を入力してください'; render(); return; }
+  if (!isRest && (f.ci_h === '' || f.co_h === '')) { st.formErr = '出退社時刻を入力してください'; render(); return; }
+  try {
+    const { error } = await db.from('attendance_records').upsert({
+      employee_id: st.emp.id,
+      work_date: f.date,
+      clock_in:  isRest ? '00:00' : fT(f.ci_h, f.ci_m),
+      clock_out: isRest ? '00:00' : fT(f.co_h, f.co_m),
+      hayachi:   isRest ? 0 : parseFloat(f.hayachi) || 0,
+      zangyou:   isRest ? 0 : parseFloat(f.zangyou) || 0,
+      site:      isRest ? '' : f.site,
+      kyumi:     isRest ? '休み' : '',
+    }, { onConflict: 'employee_id,work_date' });
+    if (error) { st.formErr = '保存に失敗しました: ' + error.message; render(); return; }
+    st.submitted = true;
+    st.formErr = '';
+    await loadHistory();
+    render();
+  } catch (e) {
+    st.formErr = 'エラーが発生しました。再度お試しください。';
+    render();
+  }
+}
+
+/* ===== イベント ===== */
+function bindEvents() {
+  function g(id) { return document.getElementById(id); }
+  function on(id, ev, fn) { const el = g(id); if (el) el.addEventListener(ev, fn); }
+
+  if (st.screen === 'onetap') {
+    on('btn-onetap', 'click', tryOnetap);
+    on('btn-switch', 'click', () => { clearSaved(); st.screen = 'login'; render(); });
+  }
+
+  if (st.screen === 'login') {
+    loadEmployees();
+    [0,1,2,3].forEach(i => {
+      const el = g(`pin-${i}`);
+      if (!el) return;
+      el.addEventListener('input', e => {
+        const v = e.target.value.replace(/\D/g,'');
+        st.pinArr[i] = v.slice(-1);
+        e.target.value = st.pinArr[i];
+        if (v && i < 3) { const next = g(`pin-${i+1}`); if(next) next.focus(); }
+      });
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !el.value && i > 0) { const prev = g(`pin-${i-1}`); if(prev) prev.focus(); }
+      });
+    });
+    on('btn-login', 'click', tryLogin);
+  }
+
+  if (st.screen === 'home') {
+    on('btn-logout', 'click', () => {
+      clearSaved();
+      Object.assign(st, { screen:'login', emp:null, tab:'input', submitted:false,
+        pinArr:['','','',''], selEmpId:'', histRecs:[], f:{...BLANK_F} });
+      render();
+    });
+    on('tab-input',   'click', () => { st.tab = 'input';   st.submitted = false; render(); });
+    on('tab-history', 'click', () => { st.tab = 'history'; render(); });
+    on('btn-kyu', 'click', () => { st.f.kyumi = st.f.kyumi ? '' : '休み'; render(); });
+    on('btn-sub', 'click', submitRecord);
+    on('btn-another', 'click', () => {
+      st.submitted = false;
+      st.f = { ...BLANK_F, date: '' };
+      render();
+    });
+
+    ['f-dt','f-cih','f-cim','f-coh','f-com','f-hc','f-zan','f-st'].forEach(id => {
+      const el = g(id); if (!el) return;
+      const map = { 'f-dt':'date','f-cih':'ci_h','f-cim':'ci_m','f-coh':'co_h','f-com':'co_m',
+                    'f-hc':'hayachi','f-zan':'zangyou','f-st':'site' };
+      el.addEventListener('input', () => { st.f[map[id]] = el.value; });
+    });
+
+    const msel = g('m-sel');
+    if (msel) msel.addEventListener('change', () => { st.month = msel.value; render(); });
+  }
+}
+
+render();
+</script>
+</body>
+</html>
