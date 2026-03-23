@@ -401,12 +401,12 @@ function confirmSubmitHtml() {
   <div class="card" style="margin-bottom:12px">
     <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:600">入力内容の確認</div>
     <table>
-      <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th></tr></thead>
+      <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
       <tbody>${mr.map(r => {
         const d2 = new Date(r.work_date);
         const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
         const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
-        if (r.kyumi) return `<tr><td>${r.work_date.slice(5)}</td><td style="color:${col}">${dow}</td><td colspan="4" style="text-align:center"><span class="badge badge-r">休み</span></td></tr>`;
+        if (r.kyumi) return `<tr><td>${r.work_date.slice(5)}</td><td style="color:${col}">${dow}</td><td colspan="5" style="text-align:center"><span class="badge badge-r">休み</span></td></tr>`;
         return `<tr>
           <td>${r.work_date.slice(5)}</td>
           <td style="color:${col}">${dow}</td>
@@ -414,6 +414,7 @@ function confirmSubmitHtml() {
           <td>${dispT(r.clock_out)}</td>
           <td>${r.hayachi>0?r.hayachi+'h':'-'}</td>
           <td>${r.zangyou>0?r.zangyou+'h':'-'}</td>
+          <td style="color:#888;max-width:80px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>
