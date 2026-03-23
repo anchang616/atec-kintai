@@ -165,6 +165,33 @@ function loginHtml() {
 /* ===== ホーム ===== */
 function homeHtml() {
   const todayRec = st.histRecs.find(r => r.work_date === TODAY);
+  const isSubmitted = !!st.submissions[CP.monthKey];
+
+  // 締め日リマインダー計算
+  const todayD = new Date(TODAY);
+  const cutoffD = new Date(CP.end); // 25日
+  const diffMs = cutoffD - todayD;
+  const diffDays = Math.floor(diffMs / (1000*60*60*24));
+
+  let reminderBanner = '';
+  if (!isSubmitted) {
+    if (diffDays === 0) {
+      // 締め日当日
+      reminderBanner = `
+      <div style="background:#dc2626;border-radius:12px;padding:14px 16px;margin-bottom:12px;color:#fff;cursor:pointer" id="banner-submit">
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">📋 今日は締め日です！</div>
+        <div style="font-size:12px;opacity:.9">勤怠を確認して提出してください →</div>
+      </div>`;
+    } else if (diffDays > 0 && diffDays <= 3) {
+      // 締め日3日前
+      reminderBanner = `
+      <div style="background:#d97706;border-radius:12px;padding:14px 16px;margin-bottom:12px;color:#fff;cursor:pointer" id="banner-submit">
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">⏰ 締め日まであと${diffDays}日</div>
+        <div style="font-size:12px;opacity:.9">忘れずに勤怠を提出してください →</div>
+      </div>`;
+    }
+  }
+
   return `
   <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.5rem;margin-bottom:1rem">
     <div>
@@ -177,6 +204,7 @@ function homeHtml() {
     <span style="font-weight:600">${CP.label}</span>
     <span>${CP.start.slice(5)} 〜 ${CP.end.slice(5)}</span>
   </div>
+  ${reminderBanner}
   ${todayRec && st.tab==='input' ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
   ${st.tab === 'confirm' ? confirmSubmitHtml() : `
   <div class="tab-bar">
@@ -607,9 +635,10 @@ function bindEvents() {
     on('btn-logout', 'click', () => {
       clearSaved();
       Object.assign(st, { screen:'login', emp:null, tab:'input', submitted:false,
-        pinArr:['','','',''], selEmpId:'', histRecs:[], f:{...BLANK_F} });
+        pinArr:['','','',''], selEmpId:'', histRecs:[], submissions:{}, f:{...BLANK_F} });
       render();
     });
+    on('banner-submit', 'click', () => { st.tab = 'history'; render(); });
     on('tab-input',   'click', () => { st.tab = 'input';   st.submitted = false; render(); });
     on('tab-history', 'click', () => { st.tab = 'history'; render(); });
     on('btn-submit-month', 'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
