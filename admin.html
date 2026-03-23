@@ -68,7 +68,6 @@ tr:last-child td{border-bottom:none}
 <script>
 const SUPABASE_URL = 'https://yzltpyxpzsgaphswxywy.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vpNaGJWb-tan7UMX5Oz2nQ_l2o-BtrR';
-const ADMIN_PASS   = 'atec2026';
 const STD_H = 8;
 
 const { createClient } = supabase;
@@ -149,8 +148,12 @@ function loginHtml() {
     <div class="card">
       ${st.loginErr ? `<div class="err">${st.loginErr}</div>` : ''}
       <div class="fld">
-        <label>管理者パスワード</label>
-        <input type="password" id="l-pass" placeholder="パスワードを入力">
+        <label>メールアドレス</label>
+        <input type="email" id="l-email" placeholder="admin@example.com" autocomplete="email">
+      </div>
+      <div class="fld">
+        <label>パスワード</label>
+        <input type="password" id="l-pass" placeholder="パスワードを入力" autocomplete="current-password">
       </div>
       <button class="btn btn-pri" id="btn-login">ログイン</button>
     </div>
@@ -445,10 +448,11 @@ function bind() {
 
   if (st.screen === 'login') {
     on('l-pass', 'keydown', e => { if (e.key === 'Enter') login(); });
+    on('l-email', 'keydown', e => { if (e.key === 'Enter') login(); });
     on('btn-login', 'click', login);
   }
   if (st.screen === 'admin') {
-    on('btn-logout', 'click', () => { st.screen = 'login'; st.pass = ''; render(); });
+    on('btn-logout', 'click', async () => { await db.auth.signOut(); st.screen = 'login'; render(); });
     ['dashboard','monthly','alerts','history','master'].forEach(t => {
       on('tab-'+t, 'click', async () => {
         st.tab = t;
@@ -476,9 +480,12 @@ function bind() {
 }
 
 async function login() {
-  const pass = document.getElementById('l-pass')?.value || '';
-  if (pass !== ADMIN_PASS) { st.loginErr = 'パスワードが違います'; render(); return; }
-  st.screen = 'admin'; st.loginErr = ''; st.pass = '';
+  const email = document.getElementById('l-email')?.value?.trim() || '';
+  const pass  = document.getElementById('l-pass')?.value || '';
+  if (!email || !pass) { st.loginErr = 'メールアドレスとパスワードを入力してください'; render(); return; }
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error || !data.user) { st.loginErr = 'メールアドレスまたはパスワードが違います'; render(); return; }
+  st.screen = 'admin'; st.loginErr = '';
   await loadAll();
 }
 
