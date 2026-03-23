@@ -288,6 +288,13 @@ function historyTab() {
   const allDates = new Set([...mr.map(r=>r.work_date), ...missing]);
   const sortedDates = [...allDates].sort();
 
+  const submitBtnColor = missing.length > 0 ? '#888' : '#0F6E56';
+  const submitBtnLabel = p.label + 'を提出する';
+  const submitBtn = !isSubmitted
+    ? `<button id="btn-submit-month" class="btn btn-pri" style="margin-top:10px;background:${submitBtnColor}">${submitBtnLabel}</button>
+       <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">提出後は修正できません</div>`
+    : '';
+
   return `
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
     <div style="font-size:13px;font-weight:600">勤怠履歴</div>
@@ -353,13 +360,7 @@ function historyTab() {
       </tbody>
     </table>
   </div>
-
-  ${!isSubmitted ? `
-  <button id="btn-submit-month" class="btn btn-pri" style="margin-top:10px;background:${missing.length>0?'#888':'#0F6E56'}">
-    ${p.label}を提出する
-  </button>
-  <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">提出後は修正できません</div>
-  ` : ''}`;
+  ${submitBtn}`;
 }
 
 /* ===== 提出確認画面 ===== */
