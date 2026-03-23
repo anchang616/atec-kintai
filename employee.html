@@ -291,8 +291,11 @@ function historyTab() {
   const submitBtnColor = missing.length > 0 ? '#888' : '#0F6E56';
   const submitBtnLabel = p.label + 'を提出する';
   const submitBtn = !isSubmitted
-    ? `<button id="btn-submit-month" class="btn btn-pri" style="margin-top:10px;background:${submitBtnColor}">${submitBtnLabel}</button>
-       <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">提出後は修正できません</div>`
+    ? `<div style="position:fixed;bottom:0;left:0;right:0;padding:12px 16px 28px;background:#fff;border-top:1px solid #eee;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.08)">
+        <button id="btn-submit-month" class="btn btn-pri" style="background:${submitBtnColor};font-size:15px">${submitBtnLabel}</button>
+        <div style="font-size:11px;color:#aaa;text-align:center;margin-top:5px">提出後は修正できません</div>
+       </div>
+       <div style="height:90px"></div>`
     : '';
 
   return `
