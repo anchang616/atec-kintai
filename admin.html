@@ -68,7 +68,7 @@ tr:last-child td{border-bottom:none}
 <script>
 const SUPABASE_URL = 'https://yzltpyxpzsgaphswxywy.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vpNaGJWb-tan7UMX5Oz2nQ_l2o-BtrR';
-const ADMIN_PASS   = 'atec0316';
+const ADMIN_PASS   = 'atec2026';
 const STD_H = 8;
 
 const { createClient } = supabase;
@@ -106,6 +106,11 @@ let st = {
   ne: { name: '', pin: '' },
 };
 
+function dispT(t) {
+  if (!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
 function calcH(ci, co) {
   const [ih, im] = ci.split(':').map(Number);
   const [oh, om] = co.split(':').map(Number);
@@ -205,7 +210,7 @@ function dashTab() {
       if (r) {
         return r.kyumi
           ? `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="text-align:center"><span class="badge br">休み</span></td><td><span class="badge bg">入力済</span></td></tr>`
-          : `<tr><td style="font-weight:600">${e.name}</td><td>${r.clock_in.slice(0,5)}</td><td>${r.clock_out.slice(0,5)}</td><td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td><td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td><td style="color:#aaa;max-width:90px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td><td><span class="badge bg">入力済</span></td></tr>`;
+          : `<tr><td style="font-weight:600">${e.name}</td><td>${dispT(r.clock_in)}</td><td>${dispT(r.clock_out)}</td><td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td><td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td><td style="color:#aaa;max-width:90px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td><td><span class="badge bg">入力済</span></td></tr>`;
       }
       return `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="color:#ccc">—</td><td><span class="badge br">未入力</span></td></tr>`;
     }).join('')}</tbody>
@@ -253,7 +258,7 @@ function monthTab() {
       return `<tr>
         <td>${r.work_date.slice(5)}</td><td>${dow}</td>
         <td>${e?.name||''}</td>
-        <td>${r.clock_in.slice(0,5)}</td><td>${r.clock_out.slice(0,5)}</td>
+        <td>${dispT(r.clock_in)}</td><td>${dispT(r.clock_out)}</td>
         <td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
         <td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td>
         <td style="color:#aaa;max-width:110px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td>
@@ -312,7 +317,7 @@ function histTab() {
       return `<tr>
         <td>${r.work_date.slice(5)}</td>
         <td style="color:${col}">${dow}</td>
-        <td>${r.clock_in.slice(0,5)}</td><td>${r.clock_out.slice(0,5)}</td>
+        <td>${dispT(r.clock_in)}</td><td>${dispT(r.clock_out)}</td>
         <td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
         <td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td>
         <td style="color:#aaa;max-width:110px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td>
@@ -405,8 +410,8 @@ function csvExport() {
       rows.push([
         r.work_date, dow, emp.name,
         r.kyumi||'出勤',
-        r.kyumi ? '' : r.clock_in.slice(0,5),
-        r.kyumi ? '' : r.clock_out.slice(0,5),
+        r.kyumi ? '' : dispT(r.clock_in),
+        r.kyumi ? '' : dispT(r.clock_out),
         r.kyumi ? '' : (r.hayachi||0),
         r.kyumi ? '' : (r.zangyou||0),
         r.kyumi ? '' : (r.site||''),
