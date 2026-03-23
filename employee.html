@@ -288,17 +288,14 @@ function historyTab() {
   const allDates = new Set([...mr.map(r=>r.work_date), ...missing]);
   const sortedDates = [...allDates].sort();
 
-  const submitBtnColor = missing.length > 0 ? '#888' : '#0F6E56';
-  const submitBtnLabel = p.label + 'を提出する';
-  const submitBtn = !isSubmitted
-    ? `<div style="position:fixed;bottom:0;left:0;right:0;padding:12px 16px 28px;background:#fff;border-top:1px solid #eee;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.08)">
-        <button id="btn-submit-month" class="btn btn-pri" style="background:${submitBtnColor};font-size:15px">${submitBtnLabel}</button>
-        <div style="font-size:11px;color:#aaa;text-align:center;margin-top:5px">提出後は修正できません</div>
-       </div>
-       <div style="height:90px"></div>`
+  const submitBtnColor = missing.length > 0 ? '#d97706' : '#0F6E56';
+  const submitBtnLabel = p.label + 'を提出する →';
+  const submitBanner = !isSubmitted
+    ? `<button id="btn-submit-month" style="width:100%;padding:16px;background:${submitBtnColor};color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;letter-spacing:.02em">${submitBtnLabel}</button>`
     : '';
 
   return `
+  ${submitBanner}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
     <div style="font-size:13px;font-weight:600">勤怠履歴</div>
     <select id="m-sel" style="padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;font-family:inherit;background:#fff">
@@ -362,8 +359,7 @@ function historyTab() {
             }).join('')}
       </tbody>
     </table>
-  </div>
-  ${submitBtn}`;
+  </div>`;
 }
 
 /* ===== 提出確認画面 ===== */
