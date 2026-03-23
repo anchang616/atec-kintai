@@ -421,47 +421,89 @@ function historyTab() {
     <div class="mbox"><div class="mbox-l" style="color:${missing.length>0?'#dc2626':'#888'}">未入力</div><div class="mbox-v" style="color:${missing.length>0?'#dc2626':'#aaa'}">${missing.length}日</div></div>
   </div>
 
-  ${!isSubmitted && missing.length > 0 ? `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#B91C1C">未入力の日があります。行をタップして入力できます。</div>` : ''}
+  ${!isSubmitted && missing.length > 0 ? `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#B91C1C">未入力の日があります。各行をタップして入力・修正できます。</div>` : ''}
+  ${!isSubmitted && missing.length === 0 && mr.length > 0 ? `<div style="background:#f5f5f3;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#888">各行をタップして内容を修正できます。</div>` : ''}
 
-  <div class="card" style="padding:1rem">
-    <table>
-      <thead><tr><th>日付</th><th>曜</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
-      <tbody>
-        ${sortedDates.length === 0
-          ? `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:1.5rem">この期間の記録はありません</td></tr>`
-          : sortedDates.map(date => {
-              const r = mr.find(x => x.work_date === date);
-              const d2 = new Date(date);
-              const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
-              const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
-              if (!r) {
-                return `<tr style="background:#FEF2F2;${!isSubmitted?'cursor:pointer;':''}" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}}>
-                  <td style="color:#B91C1C;font-weight:600">${date.slice(5)}</td>
-                  <td style="color:${col}">${dow}</td>
-                  <td colspan="4" style="color:#B91C1C;font-size:11px">${!isSubmitted?'未入力 — タップして入力':'未入力'}</td>
-                  <td style="text-align:right;color:#B91C1C;font-size:16px">${!isSubmitted?'›':''}</td>
-                </tr>`;
-              }
-              if (r.kyumi) {
-                return `<tr style="${!isSubmitted?'cursor:pointer':''}">
-                  <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${date.slice(5)}</td>
-                  <td style="color:${col}" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dow}</td>
-                  <td colspan="4" style="text-align:center" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}><span class="badge badge-r">休み</span></td>
-                  <td style="text-align:right">${!isSubmitted?`<button onclick="deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button>`:''}</td>
-                </tr>`;
-              }
-              return `<tr style="${!isSubmitted?'cursor:pointer':''}">
-                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${date.slice(5)}</td>
-                <td style="color:${col}" ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dow}</td>
-                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dispT(r.clock_in)}</td>
-                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${dispT(r.clock_out)}</td>
-                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${r.hayachi>0?`<span class="badge badge-g">${r.hayachi}h</span>`:'-'}</td>
-                <td ${!isSubmitted?`onclick="jumpToInput('${date}')"`:''}>${r.zangyou>0?`<span class="badge badge-y">${r.zangyou}h</span>`:'-'}</td>
-                <td><span style="color:#888;font-size:11px">${r.site||''}</span>${!isSubmitted?`<button onclick="deleteRecord('${r.id}','${date}')" style="float:right;background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px">✕</button>`:''}</td>
-              </tr>`;
-            }).join('')}
-      </tbody>
-    </table>
+  <div style="margin-bottom:10px">
+    ${sortedDates.length === 0
+      ? `<div style="text-align:center;color:#aaa;padding:2rem;font-size:13px">この期間の記録はありません</div>`
+      : sortedDates.map(date => {
+          const r = mr.find(x => x.work_date === date);
+          const d2 = new Date(date);
+          const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
+          const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'#444';
+
+          if (!r) {
+            // 未入力
+            return !isSubmitted ? `
+            <div onclick="jumpToInput('${date}')" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-size:13px;font-weight:700;color:#B91C1C">${date.slice(5)}</span>
+                <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
+                <div style="font-size:11px;color:#B91C1C;margin-top:3px">未入力 — タップして入力する</div>
+              </div>
+              <span style="font-size:20px;color:#FECACA">›</span>
+            </div>` : `
+            <div style="background:#FEF2F2;border-radius:10px;padding:12px 14px;margin-bottom:8px;opacity:0.6">
+              <span style="font-size:13px;font-weight:700;color:#B91C1C">${date.slice(5)}</span>
+              <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
+              <span style="font-size:11px;color:#B91C1C;margin-left:8px">未入力</span>
+            </div>`;
+          }
+
+          if (r.kyumi) {
+            return !isSubmitted ? `
+            <div onclick="jumpToInput('${date}')" style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+                <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
+                <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">休み</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button onclick="event.stopPropagation();deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ddd;font-size:18px;cursor:pointer;padding:4px">✕</button>
+                <span style="font-size:18px;color:#ddd">›</span>
+              </div>
+            </div>` : `
+            <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+              <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+              <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
+              <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">休み</span>
+            </div>`;
+          }
+
+          // 通常入力済み
+          return !isSubmitted ? `
+          <div onclick="jumpToInput('${date}')" style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <div>
+                <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+                <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button onclick="event.stopPropagation();deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ddd;font-size:18px;cursor:pointer;padding:4px">✕</button>
+                <span style="font-size:14px;color:#ccc">修正 ›</span>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#666;display:flex;gap:12px;flex-wrap:wrap">
+              <span>${dispT(r.clock_in)} 〜 ${dispT(r.clock_out)}</span>
+              ${r.hayachi>0?`<span style="color:#888">早遅 ${r.hayachi}h</span>`:''}
+              ${r.zangyou>0?`<span style="color:#d97706">残業 ${r.zangyou}h</span>`:''}
+              ${r.site?`<span style="color:#aaa">${r.site}</span>`:''}
+            </div>
+          </div>` : `
+          <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+            <div style="margin-bottom:4px">
+              <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+              <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
+            </div>
+            <div style="font-size:12px;color:#666;display:flex;gap:12px;flex-wrap:wrap">
+              <span>${dispT(r.clock_in)} 〜 ${dispT(r.clock_out)}</span>
+              ${r.hayachi>0?`<span style="color:#888">早遅 ${r.hayachi}h</span>`:''}
+              ${r.zangyou>0?`<span style="color:#d97706">残業 ${r.zangyou}h</span>`:''}
+              ${r.site?`<span style="color:#aaa">${r.site}</span>`:''}
+            </div>
+          </div>`;
+        }).join('')}
   </div>`;
 }
 
