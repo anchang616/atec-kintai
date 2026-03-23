@@ -180,14 +180,14 @@ function homeHtml() {
       reminderBanner = `
       <div style="background:#dc2626;border-radius:12px;padding:14px 16px;margin-bottom:12px;color:#fff;cursor:pointer" id="banner-submit">
         <div style="font-size:15px;font-weight:700;margin-bottom:4px">📋 今日は締め日です！</div>
-        <div style="font-size:12px;opacity:.9">勤怠を確認して提出してください →</div>
+        <div style="font-size:12px;opacity:.9">「記録・提出」タブを開いて、今月の勤怠を会社に送ってください →</div>
       </div>`;
     } else if (diffDays > 0 && diffDays <= 3) {
       // 締め日3日前
       reminderBanner = `
       <div style="background:#d97706;border-radius:12px;padding:14px 16px;margin-bottom:12px;color:#fff;cursor:pointer" id="banner-submit">
         <div style="font-size:15px;font-weight:700;margin-bottom:4px">⏰ 締め日まであと${diffDays}日</div>
-        <div style="font-size:12px;opacity:.9">忘れずに勤怠を提出してください →</div>
+        <div style="font-size:12px;opacity:.9">「記録・提出」タブから今月の勤怠を確認して会社に送ってください →</div>
       </div>`;
     }
   }
@@ -208,8 +208,8 @@ function homeHtml() {
   ${todayRec && st.tab==='input' ? `<div class="warn-box">本日（${TODAY}）はすでに入力済みです。再入力すると上書きされます。</div>` : ''}
   ${st.tab === 'confirm' ? confirmSubmitHtml() : `
   <div class="tab-bar">
-    <button class="tab ${st.tab==='input'?'on':''}" id="tab-input">入力</button>
-    <button class="tab ${st.tab==='history'?'on':''}" id="tab-history">履歴</button>
+    <button class="tab ${st.tab==='input'?'on':''}" id="tab-input">今日の入力</button>
+    <button class="tab ${st.tab==='history'?'on':''}" id="tab-history">記録・提出</button>
   </div>
   ${st.tab === 'input' ? inputTab() : historyTab()}`}`;
 }
@@ -231,7 +231,7 @@ function inputTab() {
   return `
   <div class="card">
     ${st.formErr ? `<div class="err">${st.formErr}</div>` : ''}
-    <div class="card-ttl">勤務日</div>
+    <div class="card-ttl">いつ働きましたか？</div>
     <div class="fld">
       <label>日付 <span style="color:#dc2626">*</span></label>
       <input type="date" id="f-dt" value="${f.date}">
@@ -244,7 +244,7 @@ function inputTab() {
   </div>
   ${!isRest ? `
   <div class="card">
-    <div class="card-ttl">時刻</div>
+    <div class="card-ttl">何時から何時まで？</div>
     <div class="r2">
       <div class="fld" style="margin-bottom:0">
         <label>出社 <span style="color:#dc2626">*</span></label>
@@ -278,10 +278,10 @@ function inputTab() {
     </div>
   </div>
   <div class="card">
-    <div class="card-ttl">作業内容</div>
+    <div class="card-ttl">どこで働きましたか？</div>
     <div class="fld" style="margin-bottom:0">
       <label>行先・他</label>
-      <input type="text" id="f-st" value="${f.site}" placeholder="行先・その他">
+      <input type="text" id="f-st" value="${f.site}" placeholder="例：置場、南港、事務所">
     </div>
   </div>` : ''}
   <button class="btn btn-pri" id="btn-sub" style="margin-top:4px">登録する</button>`;
@@ -317,7 +317,7 @@ function historyTab() {
   const sortedDates = [...allDates].sort();
 
   const submitBtnColor = missing.length > 0 ? '#d97706' : '#0F6E56';
-  const submitBtnLabel = p.label + 'を提出する →';
+  const submitBtnLabel = p.label + 'の勤怠を会社に送る →';
   const submitBanner = !isSubmitted
     ? `<button id="btn-submit-month" style="width:100%;padding:16px;background:${submitBtnColor};color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;letter-spacing:.02em">${submitBtnLabel}</button>`
     : '';
@@ -336,13 +336,13 @@ function historyTab() {
   <div style="background:#EAF3DE;border:1px solid #A5D6A7;border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#2E7D32;display:flex;align-items:center;gap:8px">
     <span style="font-size:16px">✅</span>
     <div>
-      <div style="font-weight:600">提出済み</div>
-      <div style="font-size:11px;margin-top:1px">${new Date(st.submissions[p.monthKey]).toLocaleDateString('ja-JP')} に提出しました</div>
+      <div style="font-weight:600">✅ 今月分は送信済みです</div>
+      <div style="font-size:11px;margin-top:1px">${new Date(st.submissions[p.monthKey]).toLocaleDateString('ja-JP')} に会社に送りました</div>
     </div>
   </div>` : ''}
 
   <div class="msum">
-    <div class="mbox"><div class="mbox-l">出勤日数</div><div class="mbox-v">${mr.filter(r=>!r.kyumi).length}日</div></div>
+    <div class="mbox"><div class="mbox-l">今月の出勤日数</div><div class="mbox-v">${mr.filter(r=>!r.kyumi).length}日</div></div>
     <div class="mbox"><div class="mbox-l" style="color:${missing.length>0?'#dc2626':'#888'}">未入力</div><div class="mbox-v" style="color:${missing.length>0?'#dc2626':'#aaa'}">${missing.length}日</div></div>
   </div>
 
@@ -409,7 +409,7 @@ function confirmSubmitHtml() {
 
   return `
   <div style="padding-top:.5rem;margin-bottom:1.25rem">
-    <div style="font-size:18px;font-weight:700">提出前の最終確認</div>
+    <div style="font-size:18px;font-weight:700">送信前の確認</div>
     <div style="font-size:12px;color:#aaa;margin-top:2px">${p.label}（${p.start} 〜 ${p.end}）</div>
   </div>
 
@@ -420,10 +420,10 @@ function confirmSubmitHtml() {
       const dw = ['日','月','火','水','木','金','土'][new Date(d).getDay()];
       return `<div style="font-size:12px;color:#B91C1C;padding:3px 0;border-bottom:1px solid #FECACA">${d.slice(5)}（${dw}）</div>`;
     }).join('')}
-    <div style="font-size:11px;color:#888;margin-top:8px">未入力のまま提出することもできますが、提出後は修正できません。</div>
+    <div style="font-size:11px;color:#888;margin-top:8px">未入力のまま提出することもできますが、送信後は内容を変更できません。</div>
   </div>` : `
   <div style="background:#EAF3DE;border:1px solid #A5D6A7;border-radius:12px;padding:1rem;margin-bottom:12px;font-size:13px;color:#2E7D32">
-    ✅ 全日程の入力が完了しています
+    ✅ すべての日の入力が完了しています
   </div>`}
 
   <div class="card" style="margin-bottom:12px">
@@ -449,15 +449,15 @@ function confirmSubmitHtml() {
   </div>
 
   <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:1rem;margin-bottom:16px;font-size:12px;color:#92400E">
-    <div style="font-weight:600;margin-bottom:4px">⚠️ 提出すると修正できなくなります</div>
-    上記の内容に間違いがないことを確認してから提出してください。
+    <div style="font-weight:600;margin-bottom:4px">⚠️ 送信後は内容を変更できません</div>
+    上の内容に間違いがないか確認してから送ってください。
   </div>
 
   <button id="btn-confirm-submit" class="btn btn-pri" style="background:#dc2626;margin-bottom:10px">
-    間違いありません、提出します
+    この内容で会社に送る
   </button>
   <button id="btn-cancel-submit" class="btn btn-sec">
-    戻って確認する
+    ← 戻って確認する
   </button>`;
 }
 /* ===== 削除 ===== */
