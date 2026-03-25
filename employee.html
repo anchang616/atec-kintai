@@ -191,7 +191,7 @@ function homeHtml() {
 
   // ===== ホーム画面 =====
   const todayStatus = todayRec
-    ? todayRec.kyumi
+    ? todayRec.kyumi === '休み'
       ? `<div style="background:#FEE2E2;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
            <span style="font-size:20px">😴</span>
            <div><div style="font-size:13px;font-weight:600;color:#B91C1C">今日は休みで登録済みです</div></div>
@@ -298,7 +298,7 @@ function inputTab() {
     return `<div class="ok-card">
       <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
       <div class="ok-ttl">登録完了</div>
-      <div class="ok-sub">${f.date}（${isRest ? '休み' : '出勤'}）を記録しました</div>
+      <div class="ok-sub">${f.date}（${f.kyumi || '通常勤務'}）を記録しました</div>
       <button class="btn btn-sec" id="btn-another" style="margin-top:16px;width:auto;padding:9px 22px">別の日付を入力</button>
     </div>`;
   }
@@ -306,15 +306,18 @@ function inputTab() {
   return `
   <div class="card">
     ${st.formErr ? `<div class="err">${st.formErr}</div>` : ''}
-    <div class="card-ttl">いつ働きましたか？</div>
     <div class="fld">
       <label>日付 <span style="color:#dc2626">*</span></label>
       <input type="date" id="f-dt" value="${f.date}">
     </div>
     <div class="fld" style="margin-bottom:0">
-      <button id="btn-kyu" class="${isRest ? 'btn-kyu-on' : 'btn-kyu-off'}">
-        ${isRest ? '✕ 休みを取り消す' : '休み'}
-      </button>
+      <label>勤務区分</label>
+      <select id="f-kyu" style="width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:9px;font-size:15px;font-family:inherit;color:#1a1a1a;background:#fff;-webkit-appearance:none;outline:none">
+        <option value="" ${f.kyumi===''?'selected':''}>通常勤務</option>
+        <option value="調整勤務" ${f.kyumi==='調整勤務'?'selected':''}>調整勤務</option>
+        <option value="出張" ${f.kyumi==='出張'?'selected':''}>出張</option>
+        <option value="休み" ${f.kyumi==='休み'?'selected':''}>休み</option>
+      </select>
     </div>
   </div>
   ${!isRest ? `
@@ -457,7 +460,7 @@ function historyTab() {
               <div>
                 <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
                 <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
-                <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">休み</span>
+                <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">${r.kyumi}</span>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <button onclick="event.stopPropagation();deleteRecord('${r.id}','${date}')" style="background:none;border:none;color:#ddd;font-size:18px;cursor:pointer;padding:4px">✕</button>
@@ -467,7 +470,7 @@ function historyTab() {
             <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px">
               <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
               <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
-              <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">休み</span>
+              <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">${r.kyumi}</span>
             </div>`;
           }
 
@@ -551,7 +554,7 @@ function confirmSubmitHtml() {
         const d2 = new Date(r.work_date);
         const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
         const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
-        if (r.kyumi) return `<tr><td>${r.work_date.slice(5)}</td><td style="color:${col}">${dow}</td><td colspan="5" style="text-align:center"><span class="badge badge-r">休み</span></td></tr>`;
+        if (r.kyumi) return `<tr><td>${r.work_date.slice(5)}</td><td style="color:${col}">${dow}</td><td colspan="5" style="text-align:center"><span class="badge badge-r">${r.kyumi}</span></td></tr>`;
         return `<tr>
           <td>${r.work_date.slice(5)}</td>
           <td style="color:${col}">${dow}</td>
@@ -593,7 +596,7 @@ function jumpToInput(date) {
   if (existing) {
     // 既存レコードの内容をフォームに展開
     if (existing.kyumi) {
-      f = { ...BLANK_F, date, kyumi: '休み' };
+      f = { ...BLANK_F, date, kyumi: existing.kyumi || '休み' };
     } else {
       const ci = existing.clock_in.split(':');
       const co = existing.clock_out.split(':');
@@ -709,7 +712,7 @@ async function submitRecord() {
       hayachi:   isRest ? 0 : parseFloat(f.hayachi) || 0,
       zangyou:   isRest ? 0 : parseFloat(f.zangyou) || 0,
       site:      isRest ? '' : f.site,
-      kyumi:     isRest ? '休み' : '',
+      kyumi:     f.kyumi || '',
     }, { onConflict: 'employee_id,work_date' });
     if (error) { st.formErr = '保存に失敗しました: ' + error.message; render(); return; }
     st.submitted = true;
@@ -774,7 +777,7 @@ function bindEvents() {
     on2('btn-cancel-submit',   'click', () => { st.tab = 'history'; render(); });
 
     // 入力フォーム
-    on2('btn-kyu', 'click', () => { st.f.kyumi = st.f.kyumi ? '' : '休み'; render(); });
+
     on2('btn-sub', 'click', submitRecord);
     on2('btn-another', 'click', () => {
       st.submitted = false;
@@ -783,11 +786,12 @@ function bindEvents() {
       render();
     });
 
-    ['f-dt','f-cih','f-cim','f-coh','f-com','f-hc','f-zan','f-st'].forEach(id => {
+    ['f-dt','f-cih','f-cim','f-coh','f-com','f-hc','f-zan','f-st','f-kyu'].forEach(id => {
       const el = g2(id); if (!el) return;
       const map = { 'f-dt':'date','f-cih':'ci_h','f-cim':'ci_m','f-coh':'co_h','f-com':'co_m',
-                    'f-hc':'hayachi','f-zan':'zangyou','f-st':'site' };
-      el.addEventListener('input', () => { st.f[map[id]] = el.value; });
+                    'f-hc':'hayachi','f-zan':'zangyou','f-st':'site','f-kyu':'kyumi' };
+      const evName = id === 'f-kyu' ? 'change' : 'input';
+      el.addEventListener(evName, () => { st.f[map[id]] = el.value; if(id==='f-kyu') render(); });
     });
 
     const msel = g2('m-sel');
