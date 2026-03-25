@@ -706,6 +706,14 @@ async function submitRecord() {
   const isRest = f.kyumi === '休み';
   if (!f.date) { st.formErr = '日付を入力してください'; render(); return; }
   if (!isRest && (f.ci_h === '' || f.co_h === '')) { st.formErr = '出退社時刻を入力してください'; render(); return; }
+
+  // 提出済み期間チェック
+  const datePeriod = getPeriod(f.date);
+  if (st.submissions[datePeriod.monthKey]) {
+    st.formErr = `${datePeriod.label}はすでに提出済みです。提出後は入力できません。`;
+    render(); return;
+  }
+
   try {
     const { error } = await db.from('attendance_records').upsert({
       employee_id: st.emp.id,
@@ -795,7 +803,19 @@ function bindEvents() {
       const map = { 'f-dt':'date','f-cih':'ci_h','f-cim':'ci_m','f-coh':'co_h','f-com':'co_m',
                     'f-hc':'hayachi','f-zan':'zangyou','f-st':'site','f-kyu':'kyumi' };
       const evName = id === 'f-kyu' ? 'change' : 'input';
-      el.addEventListener(evName, () => { st.f[map[id]] = el.value; if(id==='f-kyu') render(); });
+      el.addEventListener(evName, () => {
+        st.f[map[id]] = el.value;
+        if (id === 'f-dt') {
+          // 日付変更時に提出済みチェック
+          const dp = getPeriod(el.value);
+          if (st.submissions[dp.monthKey]) {
+            st.formErr = `${dp.label}はすでに提出済みです。提出後は入力できません。`;
+          } else {
+            st.formErr = '';
+          }
+          render();
+        } else if(id==='f-kyu') render();
+      });
     });
 
     const msel = g2('m-sel');
