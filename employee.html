@@ -312,8 +312,8 @@ function inputTab() {
       <input type="date" id="f-dt" value="${f.date}">
     </div>
     <div class="fld" style="margin-bottom:0">
-      <label>勤務区分</label>
-      <select id="f-kyu" style="width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:9px;font-size:15px;font-family:inherit;color:#1a1a1a;background:#fff;-webkit-appearance:none;outline:none">
+      <label>勤務区分 <span style="font-size:10px;color:#aaa">▼ タップして選択</span></label>
+      <select id="f-kyu" style="width:100%;padding:11px 12px;border:1.5px solid #0F6E56;border-radius:9px;font-size:15px;font-family:inherit;color:#1a1a1a;background:#fff;-webkit-appearance:none;outline:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22><path fill=%22%23888%22 d=%22M7 10l5 5 5-5z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:36px">
         <option value="" ${f.kyumi===''?'selected':''}>通常勤務</option>
         <option value="調整勤務" ${f.kyumi==='調整勤務'?'selected':''}>調整勤務</option>
         <option value="出張" ${f.kyumi==='出張'?'selected':''}>出張</option>
