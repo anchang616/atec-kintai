@@ -299,7 +299,8 @@ function inputTab() {
       <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
       <div class="ok-ttl">登録完了</div>
       <div class="ok-sub">${f.date}（${f.kyumi || '通常勤務'}）を記録しました</div>
-      <button class="btn btn-sec" id="btn-another" style="margin-top:16px;width:auto;padding:9px 22px">別の日付を入力</button>
+      <button id="btn-check-record" class="btn btn-pri" style="margin-top:16px">登録内容を確認する →</button>
+      <button class="btn btn-sec" id="btn-another" style="margin-top:10px">別の日付を入力</button>
     </div>`;
   }
 
@@ -781,6 +782,7 @@ function bindEvents() {
     // 入力フォーム
 
     on2('btn-sub', 'click', submitRecord);
+    on2('btn-check-record', 'click', () => { st.tab = 'history'; st.submitted = false; render(); window.scrollTo(0,0); });
     on2('btn-another', 'click', () => {
       st.submitted = false;
       st.f = { ...BLANK_F, date: '' };
