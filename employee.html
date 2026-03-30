@@ -173,7 +173,7 @@ function homeHtml() {
   const diffMs = cutoffD - todayD;
   const diffDays = Math.floor(diffMs / (1000*60*60*24));
 
-  // 未入力日数を計算
+  // 未入力日数を計算（当月分）
   const p = CP;
   const inputted = new Set(st.histRecs.filter(r => r.work_date >= p.start && r.work_date <= p.end).map(r => r.work_date));
   const missing = [];
@@ -185,11 +185,27 @@ function homeHtml() {
     cur.setDate(cur.getDate() + 1);
   }
 
+  // 先月分が未提出かチェック（26日以降に先月分が未提出の場合）
+  const prevPeriod = getPeriod(new Date(todayD.getFullYear(), todayD.getMonth(), 1).toLocaleDateString('sv-SE'));
+  const isPrevSubmitted = !!st.submissions[prevPeriod.monthKey];
+  const isPastCutoff = diffDays < 0; // 25日を過ぎている
+
   if (st.tab === 'input')   return inputScreen();
   if (st.tab === 'history') return historyScreen();
   if (st.tab === 'confirm') return confirmScreen();
 
   // ===== ホーム画面 =====
+
+  // 先月分未提出バナー（最優先表示）
+  const prevUnsubmittedBanner = isPastCutoff && !isPrevSubmitted
+    ? `<button id="btn-prev-submit" style="width:100%;padding:16px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div>📋 ${prevPeriod.label}がまだ未提出です</div>
+          <div style="font-size:12px;opacity:.85;margin-top:4px;font-weight:400">タップして内容を確認・提出してください</div>
+        </div>
+        <span style="font-size:22px;margin-left:8px">→</span>
+       </button>` : '';
+
   const todayStatus = todayRec
     ? todayRec.kyumi === '休み'
       ? `<div style="background:#FEE2E2;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
@@ -240,14 +256,14 @@ function homeHtml() {
     <button class="btn btn-sec btn-sm" id="btn-logout">ログアウト</button>
   </div>
 
-  
+  ${prevUnsubmittedBanner}
   ${todayStatus}
 
   <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今月の入力状況</div>
   ${missingStatus}
 
   <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>
-  ${submitStatus}
+  ${submitStatus}`;
 
 `;
 }
@@ -771,8 +787,12 @@ function bindEvents() {
     on2('btn-goto-home',    'click', () => { st.tab = 'home'; render(); window.scrollTo(0,0); });
     on2('btn-goto-input',   'click', () => { st.tab = 'input'; st.submitted = false; render(); window.scrollTo(0,0); });
     on2('btn-goto-history', 'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
-    on2('btn-goto-submit',  'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
-    on2('banner-submit',    'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
+    // 提出ボタン系はすべて確認画面に直接飛ぶ
+    on2('btn-goto-submit',  'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
+    // 先月分バナー用（prevPeriodをbind内で参照）
+    const prevPeriod2 = getPeriod(new Date(new Date(TODAY).getFullYear(), new Date(TODAY).getMonth(), 1).toLocaleDateString('sv-SE'));
+    on2('btn-prev-submit',  'click', () => { st.month = prevPeriod2.monthKey; st.tab = 'confirm'; render(); window.scrollTo(0,0); });
+    on2('banner-submit',    'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
 
     // 提出フロー
     on2('btn-submit-month',    'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
