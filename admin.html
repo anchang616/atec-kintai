@@ -213,7 +213,7 @@ function dashTab() {
       const r = st.todayRecs.find(x => x.employee_id === e.id);
       if (r) {
         return r.kyumi
-          ? `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="text-align:center"><span class="badge br">休み</span></td><td><span class="badge bg">入力済</span></td></tr>`
+          ? `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="text-align:center"><span class="badge br">${r.kyumi}</span></td><td><span class="badge bg">入力済</span></td></tr>`
           : `<tr><td style="font-weight:600">${e.name}</td><td>${dispT(r.clock_in)}</td><td>${dispT(r.clock_out)}</td><td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td><td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td><td style="color:#aaa;max-width:90px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td><td><span class="badge bg">入力済</span></td></tr>`;
       }
       return `<tr><td style="font-weight:600">${e.name}</td><td colspan="6" style="color:#ccc">—</td><td><span class="badge br">未入力</span></td></tr>`;
@@ -257,7 +257,7 @@ function monthTab() {
       if (r.kyumi) return `<tr>
         <td>${r.work_date.slice(5)}</td><td>${dow}</td>
         <td>${e?.name||''}</td>
-        <td colspan="5" style="text-align:center"><span class="badge br">休み</span></td>
+        <td colspan="5" style="text-align:center"><span class="badge br">${r.kyumi}</span></td>
       </tr>`;
       return `<tr>
         <td>${r.work_date.slice(5)}</td><td>${dow}</td>
@@ -316,7 +316,7 @@ function histTab() {
       if (r.kyumi) return `<tr>
         <td>${r.work_date.slice(5)}</td>
         <td style="color:${col}">${dow}</td>
-        <td colspan="5" style="text-align:center"><span class="badge br">休み</span></td>
+        <td colspan="5" style="text-align:center"><span class="badge br">${r.kyumi}</span></td>
       </tr>`;
       return `<tr>
         <td>${r.work_date.slice(5)}</td>
@@ -498,7 +498,17 @@ async function loadMonthData() {
   st.loading = false; render();
 }
 
-render();
+async function init() {
+  const { data } = await db.auth.getSession();
+  if (data.session) {
+    st.screen = 'admin';
+    await loadAll();
+  } else {
+    render();
+  }
+}
+
+init();
 </script>
 </body>
 </html>
