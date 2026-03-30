@@ -409,11 +409,20 @@ function historyTab() {
   const allDates = new Set([...mr.map(r=>r.work_date), ...missing]);
   const sortedDates = [...allDates].sort();
 
-  const submitBtnColor = missing.length > 0 ? '#d97706' : '#0F6E56';
-  const submitBtnLabel = p.label + 'の勤怠を会社に送る →';
-  const submitBanner = !isSubmitted
-    ? `<button id="btn-submit-month" style="width:100%;padding:16px;background:${submitBtnColor};color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;letter-spacing:.02em">${submitBtnLabel}</button>`
-    : '';
+  // 提出可能条件：締め日を過ぎている かつ 未入力ゼロ
+  const isPastCutoffHistory = new Date(TODAY) > new Date(p.end);
+  const canSubmit = isPastCutoffHistory && missing.length === 0;
+
+  let submitBanner = '';
+  if (!isSubmitted) {
+    if (canSubmit) {
+      submitBanner = `<button id="btn-submit-month" style="width:100%;padding:16px;background:#0F6E56;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">${p.label}の勤怠を会社に送る →</button>`;
+    } else if (!isPastCutoffHistory && missing.length === 0) {
+      submitBanner = `<div style="background:#f5f5f3;border:1px solid #ddd;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#aaa">締め日（${p.end.slice(5)}）を過ぎてから提出できます</div>`;
+    } else if (missing.length > 0) {
+      submitBanner = `<div style="background:#f5f5f3;border:1px solid #ddd;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#aaa">未入力が${missing.length}日あります。全日入力後に提出できます</div>`;
+    }
+  }
 
   return `
   ${submitBanner}
