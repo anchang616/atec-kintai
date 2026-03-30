@@ -74,6 +74,7 @@ const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const TODAY = new Date().toLocaleDateString('sv-SE');
+function fmtMD(s) { const [,m,d] = s.split('-'); return `${+m}月${+d}日`; }
 
 function getPeriod(dateStr) {
   const d = dateStr ? new Date(dateStr) : new Date();
@@ -264,7 +265,7 @@ function monthTab() {
         const bg = isNewDate ? (rowIndex % 2 === 0 ? 'background:#fafafa;' : 'background:#fff;') : (rowIndex % 2 === 0 ? 'background:#fafafa;' : 'background:#fff;');
         if (isNewDate) { lastDate = r.work_date; rowIndex++; }
         const dateCell = isNewDate
-          ? `<td style="font-weight:600;color:#333;${borderTop}">${r.work_date.slice(5)}</td><td style="color:${dowCol};${borderTop}">${dow}</td>`
+          ? `<td style="font-weight:600;color:#333;${borderTop}">${fmtMD(r.work_date)}</td><td style="color:${dowCol};${borderTop}">${dow}</td>`
           : `<td style="${borderTop}"></td><td style="${borderTop}"></td>`;
         if (r.kyumi) return `<tr style="${bg}">
           ${dateCell}
@@ -328,12 +329,12 @@ function histTab() {
       const dow = ['日','月','火','水','木','金','土'][d.getDay()];
       const col = d.getDay()===0?'#dc2626':d.getDay()===6?'#2563eb':'inherit';
       if (r.kyumi) return `<tr>
-        <td>${r.work_date.slice(5)}</td>
+        <td>${fmtMD(r.work_date)}</td>
         <td style="color:${col}">${dow}</td>
         <td colspan="5" style="text-align:center"><span class="badge br">${r.kyumi}</span></td>
       </tr>`;
       return `<tr>
-        <td>${r.work_date.slice(5)}</td>
+        <td>${fmtMD(r.work_date)}</td>
         <td style="color:${col}">${dow}</td>
         <td>${dispT(r.clock_in)}</td><td>${dispT(r.clock_out)}</td>
         <td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
