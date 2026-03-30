@@ -68,6 +68,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const STD_H = 8;
 const TODAY = new Date().toLocaleDateString('sv-SE');
+function fmtMD(s) { const [,m,d] = s.split('-'); return `${+m}月${+d}日`; }
 const LS_KEY = 'atec_emp_v2'; // v2: 旧データと区別するためキー名を変更
 
 // 25日締めロジック
@@ -461,18 +462,17 @@ function historyTab() {
           const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'#444';
 
           if (!r) {
-            // 未入力
             return !isSubmitted ? `
             <div onclick="jumpToInput('${date}')" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
               <div>
-                <span style="font-size:13px;font-weight:700;color:#B91C1C">${date.slice(5)}</span>
+                <span style="font-size:13px;font-weight:700;color:#B91C1C">${fmtMD(date)}</span>
                 <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
                 <div style="font-size:11px;color:#B91C1C;margin-top:3px">未入力 — タップして入力する</div>
               </div>
               <span style="font-size:20px;color:#FECACA">›</span>
             </div>` : `
             <div style="background:#FEF2F2;border-radius:10px;padding:12px 14px;margin-bottom:8px;opacity:0.6">
-              <span style="font-size:13px;font-weight:700;color:#B91C1C">${date.slice(5)}</span>
+              <span style="font-size:13px;font-weight:700;color:#B91C1C">${fmtMD(date)}</span>
               <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
               <span style="font-size:11px;color:#B91C1C;margin-left:8px">未入力</span>
             </div>`;
@@ -482,7 +482,7 @@ function historyTab() {
             return !isSubmitted ? `
             <div onclick="jumpToInput('${date}')" style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
               <div>
-                <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+                <span style="font-size:13px;font-weight:700;color:#333">${fmtMD(date)}</span>
                 <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
                 <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">${r.kyumi}</span>
               </div>
@@ -492,18 +492,17 @@ function historyTab() {
               </div>
             </div>` : `
             <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px">
-              <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+              <span style="font-size:13px;font-weight:700;color:#333">${fmtMD(date)}</span>
               <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
               <span style="display:inline-block;background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px">${r.kyumi}</span>
             </div>`;
           }
 
-          // 通常入力済み
           return !isSubmitted ? `
           <div onclick="jumpToInput('${date}')" style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
               <div>
-                <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+                <span style="font-size:13px;font-weight:700;color:#333">${fmtMD(date)}</span>
                 <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
                 ${r.kyumi?`<span style="display:inline-block;background:#f0f0ed;color:#666;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:6px">${r.kyumi}</span>`:''}
               </div>
@@ -521,7 +520,7 @@ function historyTab() {
           </div>` : `
           <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px">
             <div style="margin-bottom:4px">
-              <span style="font-size:13px;font-weight:700;color:#333">${date.slice(5)}</span>
+              <span style="font-size:13px;font-weight:700;color:#333">${fmtMD(date)}</span>
               <span style="font-size:12px;color:${col};margin-left:6px">${dow}</span>
               ${r.kyumi?`<span style="display:inline-block;background:#f0f0ed;color:#666;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:6px">${r.kyumi}</span>`:''}
             </div>
@@ -561,7 +560,7 @@ function confirmSubmitHtml() {
     <div style="font-weight:600;color:#B91C1C;margin-bottom:8px;font-size:13px">⚠️ ${missing.length}日間が未入力です</div>
     ${missing.map(d => {
       const dw = ['日','月','火','水','木','金','土'][new Date(d).getDay()];
-      return `<div style="font-size:12px;color:#B91C1C;padding:3px 0;border-bottom:1px solid #FECACA">${d.slice(5)}（${dw}）</div>`;
+      return `<div style="font-size:12px;color:#B91C1C;padding:3px 0;border-bottom:1px solid #FECACA">${fmtMD(d)}（${dw}）</div>`;
     }).join('')}
     <div style="font-size:11px;color:#888;margin-top:8px">未入力のまま提出することもできますが、送信後は内容を変更できません。</div>
   </div>` : `
@@ -577,9 +576,9 @@ function confirmSubmitHtml() {
         const d2 = new Date(r.work_date);
         const dow = ['日','月','火','水','木','金','土'][d2.getDay()];
         const col = d2.getDay()===0?'#dc2626':d2.getDay()===6?'#2563eb':'inherit';
-        if (r.kyumi) return `<tr><td>${r.work_date.slice(5)}</td><td style="color:${col}">${dow}</td><td colspan="5" style="text-align:center"><span class="badge badge-r">${r.kyumi}</span></td></tr>`;
+        if (r.kyumi) return `<tr><td>${fmtMD(r.work_date)}</td><td style="color:${col}">${dow}</td><td colspan="5" style="text-align:center"><span class="badge badge-r">${r.kyumi}</span></td></tr>`;
         return `<tr>
-          <td>${r.work_date.slice(5)}</td>
+          <td>${fmtMD(r.work_date)}</td>
           <td style="color:${col}">${dow}</td>
           <td>${dispT(r.clock_in)}</td>
           <td>${dispT(r.clock_out)}</td>
@@ -617,7 +616,6 @@ function jumpToInput(date) {
   const existing = st.histRecs.find(r => r.work_date === date);
   let f;
   if (existing) {
-    // 既存レコードの内容をフォームに展開
     if (existing.kyumi) {
       f = { ...BLANK_F, date, kyumi: existing.kyumi || '休み' };
     } else {
@@ -727,7 +725,6 @@ async function submitRecord() {
   if (!f.date) { st.formErr = '日付を入力してください'; render(); return; }
   if (!isRest && (f.ci_h === '' || f.co_h === '')) { st.formErr = '出退社時刻を入力してください'; render(); return; }
 
-  // 提出済み期間チェック
   const datePeriod = getPeriod(f.date);
   if (st.submissions[datePeriod.monthKey]) {
     st.formErr = `${datePeriod.label}はすでに提出済みです。提出後は入力できません。`;
@@ -795,23 +792,17 @@ function bindEvents() {
       render();
     });
 
-    // ホーム画面のナビゲーション
     on2('btn-goto-home',    'click', () => { st.tab = 'home'; render(); window.scrollTo(0,0); });
     on2('btn-goto-input',   'click', () => { st.tab = 'input'; st.submitted = false; render(); window.scrollTo(0,0); });
     on2('btn-goto-history', 'click', () => { st.tab = 'history'; render(); window.scrollTo(0,0); });
-    // 提出ボタン系はすべて確認画面に直接飛ぶ
     on2('btn-goto-submit',  'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
-    // 先月分バナー用（prevPeriodをbind内で参照）
     const prevPeriod2 = getPeriod(new Date(new Date(TODAY).getFullYear(), new Date(TODAY).getMonth(), 1).toLocaleDateString('sv-SE'));
     on2('btn-prev-submit',  'click', () => { st.month = prevPeriod2.monthKey; st.tab = 'confirm'; render(); window.scrollTo(0,0); });
     on2('banner-submit',    'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
 
-    // 提出フロー
     on2('btn-submit-month',    'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
     on2('btn-confirm-submit',  'click', submitMonth);
     on2('btn-cancel-submit',   'click', () => { st.tab = 'home'; render(); window.scrollTo(0,0); });
-
-    // 入力フォーム
 
     on2('btn-sub', 'click', submitRecord);
     on2('btn-check-record', 'click', () => { st.tab = 'history'; st.submitted = false; render(); window.scrollTo(0,0); });
@@ -830,7 +821,6 @@ function bindEvents() {
       el.addEventListener(evName, () => {
         st.f[map[id]] = el.value;
         if (id === 'f-dt') {
-          // 日付変更時に提出済みチェック
           const dp = getPeriod(el.value);
           if (st.submissions[dp.monthKey]) {
             st.formErr = `${dp.label}はすでに提出済みです。提出後は入力できません。`;
