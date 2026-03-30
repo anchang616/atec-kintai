@@ -198,9 +198,9 @@ function homeHtml() {
 
   // 先月分未提出バナー（最優先表示）
   const prevUnsubmittedBanner = isPastCutoff && !isPrevSubmitted
-    ? `<button id="btn-prev-submit" style="width:100%;padding:16px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+    ? `<button id="btn-prev-submit" style="width:100%;padding:16px;background:#d97706;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;text-align:left;display:flex;justify-content:space-between;align-items:center">
         <div>
-          <div>📋 ${prevPeriod.label}がまだ未提出です</div>
+          <div>📋 ${prevPeriod.label}を提出</div>
           <div style="font-size:12px;opacity:.85;margin-top:4px;font-weight:400">タップして内容を確認・提出してください</div>
         </div>
         <span style="font-size:22px;margin-left:8px">→</span>
@@ -236,8 +236,8 @@ function homeHtml() {
          <span>✅</span><span>今月分は会社に送信済みです</span>
        </div>`
     : diffDays === 0
-      ? `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
-           <span>📋 今日が締め日！今月分を会社に送る</span><span style="font-size:18px">→</span>
+      ? `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#d97706;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+           <span>📋 今月分を提出</span><span style="font-size:18px">→</span>
          </button>`
       : diffDays > 0 && diffDays <= 3
         ? `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#d97706;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
@@ -262,8 +262,8 @@ function homeHtml() {
   <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今月の入力状況</div>
   ${missingStatus}
 
-  <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>
-  ${submitStatus}`;
+  ${!isSubmitted && (diffDays === 0 || (diffDays > 0 && diffDays <= 3) || isPastCutoff) ? '' : `<div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>
+  ${submitStatus}`}`;
 }
 
 /* ===== 各サブ画面（タブ切り替え後） ===== */
@@ -537,10 +537,7 @@ function confirmSubmitHtml() {
   }
 
   return `
-  <div style="padding-top:.5rem;margin-bottom:1.25rem">
-    <div style="font-size:18px;font-weight:700">送信前の確認</div>
-    <div style="font-size:12px;color:#aaa;margin-top:2px">${p.label}（${p.start} 〜 ${p.end}）</div>
-  </div>
+  <div style="font-size:12px;color:#aaa;margin-bottom:12px">${p.label}（${p.start} 〜 ${p.end}）</div>
 
   ${missing.length > 0 ? `
   <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:1rem;margin-bottom:12px">
@@ -640,7 +637,7 @@ async function submitMonth() {
   }, { onConflict: 'employee_id,period_key' });
   if (error) { alert('提出に失敗しました: ' + error.message); return; }
   await loadHistory();
-  st.tab = 'history';
+  st.tab = 'home';
   render();
 }
 
@@ -795,7 +792,7 @@ function bindEvents() {
     // 提出フロー
     on2('btn-submit-month',    'click', () => { st.tab = 'confirm'; render(); window.scrollTo(0,0); });
     on2('btn-confirm-submit',  'click', submitMonth);
-    on2('btn-cancel-submit',   'click', () => { st.tab = 'history'; render(); });
+    on2('btn-cancel-submit',   'click', () => { st.tab = 'home'; render(); window.scrollTo(0,0); });
 
     // 入力フォーム
 
