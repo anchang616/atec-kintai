@@ -204,7 +204,7 @@ function homeHtml() {
            </div>
          </div>`
     : `<button id="btn-goto-input" style="width:100%;padding:16px;background:#0F6E56;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
-         <span>📝 今日の勤怠を入力する</span><span style="font-size:20px">→</span>
+         <span>📝 勤怠を入力する</span><span style="font-size:20px">→</span>
        </button>`;
 
   const missingStatus = missing.length > 0
@@ -228,7 +228,7 @@ function homeHtml() {
              <span>⏰ 締め日まであと${diffDays}日・今月分を送る</span><span style="font-size:18px">→</span>
            </button>`
         : `<button id="btn-goto-submit" style="width:100%;padding:14px;background:#f5f5f3;border:1px solid #ddd;color:#666;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:12px;text-align:left;display:flex;justify-content:space-between;align-items:center">
-             <span>📤 今月の記録を確認・提出する</span><span style="font-size:16px;color:#aaa">→</span>
+             <span>📤 今月の記録を確認する</span><span style="font-size:16px;color:#aaa">→</span>
            </button>`;
 
   return `
@@ -240,7 +240,7 @@ function homeHtml() {
     <button class="btn btn-sec btn-sm" id="btn-logout">ログアウト</button>
   </div>
 
-  <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今日の状況</div>
+  
   ${todayStatus}
 
   <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今月の入力状況</div>
@@ -249,14 +249,7 @@ function homeHtml() {
   <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>
   ${submitStatus}
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
-    <button id="btn-goto-input" class="btn btn-sec" style="padding:14px;font-size:13px;border-radius:12px">
-      📝 入力画面
-    </button>
-    <button id="btn-goto-history" class="btn btn-sec" style="padding:14px;font-size:13px;border-radius:12px">
-      📋 記録一覧
-    </button>
-  </div>`;
+`;
 }
 
 /* ===== 各サブ画面（タブ切り替え後） ===== */
