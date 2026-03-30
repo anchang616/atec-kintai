@@ -262,7 +262,16 @@ function homeHtml() {
   <div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">今月の入力状況</div>
   ${missingStatus}
 
-  ${isSubmitted ? `<div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>${submitStatus}` : ''}`;
+  ${isSubmitted ? `<div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;letter-spacing:.05em">提出</div>${submitStatus}` : ''}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+    <button id="btn-goto-input" class="btn btn-sec" style="padding:14px;font-size:13px;border-radius:12px">
+      📝 勤怠を入力
+    </button>
+    <button id="btn-goto-history" class="btn btn-sec" style="padding:14px;font-size:13px;border-radius:12px">
+      📋 記録を確認
+    </button>
+  </div>`;
 }
 
 /* ===== 各サブ画面（タブ切り替え後） ===== */
