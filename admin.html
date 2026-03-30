@@ -250,24 +250,38 @@ function monthTab() {
   <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#444">日別明細（${mr.length}件）</div>
   <div class="tbl-w"><table>
     <thead><tr><th>日付</th><th>曜</th><th>氏名</th><th>出社</th><th>退社</th><th>早遅</th><th>残業</th><th>行先・他</th></tr></thead>
-    <tbody>${mr.sort((a,b)=>a.work_date.localeCompare(b.work_date)||a.employee_id.localeCompare(b.employee_id)).map(r=>{
-      const e = empById(r.employee_id);
-      const d = new Date(r.work_date);
-      const dow = ['日','月','火','水','木','金','土'][d.getDay()];
-      if (r.kyumi) return `<tr>
-        <td>${r.work_date.slice(5)}</td><td>${dow}</td>
-        <td>${e?.name||''}</td>
-        <td colspan="5" style="text-align:center"><span class="badge br">${r.kyumi}</span></td>
-      </tr>`;
-      return `<tr>
-        <td>${r.work_date.slice(5)}</td><td>${dow}</td>
-        <td>${e?.name||''}</td>
-        <td>${dispT(r.clock_in)}</td><td>${dispT(r.clock_out)}</td>
-        <td>${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
-        <td>${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td>
-        <td style="color:#aaa;max-width:110px;overflow:hidden;text-overflow:ellipsis">${r.site||''}</td>
-      </tr>`;
-    }).join('')}</tbody>
+    <tbody>${(() => {
+      const sorted = mr.sort((a,b)=>a.work_date.localeCompare(b.work_date)||a.employee_id.localeCompare(b.employee_id));
+      let lastDate = '';
+      let rowIndex = 0;
+      return sorted.map(r => {
+        const e = empById(r.employee_id);
+        const d = new Date(r.work_date);
+        const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+        const dowCol = d.getDay()===0?'#dc2626':d.getDay()===6?'#2563eb':'inherit';
+        const isNewDate = r.work_date !== lastDate;
+        const borderTop = isNewDate && lastDate !== '' ? 'border-top:2px solid #e5e7eb;' : '';
+        const bg = isNewDate ? (rowIndex % 2 === 0 ? 'background:#fafafa;' : 'background:#fff;') : (rowIndex % 2 === 0 ? 'background:#fafafa;' : 'background:#fff;');
+        if (isNewDate) { lastDate = r.work_date; rowIndex++; }
+        const dateCell = isNewDate
+          ? `<td style="font-weight:600;color:#333;${borderTop}">${r.work_date.slice(5)}</td><td style="color:${dowCol};${borderTop}">${dow}</td>`
+          : `<td style="${borderTop}"></td><td style="${borderTop}"></td>`;
+        if (r.kyumi) return `<tr style="${bg}">
+          ${dateCell}
+          <td style="${borderTop}">${e?.name||''}</td>
+          <td colspan="5" style="text-align:center;${borderTop}"><span class="badge br">${r.kyumi}</span></td>
+        </tr>`;
+        return `<tr style="${bg}">
+          ${dateCell}
+          <td style="${borderTop}">${e?.name||''}</td>
+          <td style="${borderTop}">${dispT(r.clock_in)}</td>
+          <td style="${borderTop}">${dispT(r.clock_out)}</td>
+          <td style="${borderTop}">${r.hayachi>0?`<span class="badge bgy">${r.hayachi}h</span>`:'-'}</td>
+          <td style="${borderTop}">${r.zangyou>0?`<span class="badge ba">${r.zangyou}h</span>`:'-'}</td>
+          <td style="color:#aaa;max-width:150px;overflow:hidden;text-overflow:ellipsis;${borderTop}">${r.site||''}</td>
+        </tr>`;
+      }).join('');
+    })()}</tbody>
   </table></div>`;
 }
 
